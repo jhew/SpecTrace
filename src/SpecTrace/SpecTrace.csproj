@@ -24,9 +24,15 @@
     <SelfContained>false</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <ApplicationIcon>..\..\spectrace.ico</ApplicationIcon>
+  </PropertyGroup>
+  
+  <!-- Self-contained specific settings -->
+  <PropertyGroup Condition="'$(SelfContained)' == 'true'">
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-    
+  </PropertyGroup>
+  
+  <PropertyGroup>
     <!-- Application Manifest and Security -->
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>

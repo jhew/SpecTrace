@@ -32,74 +32,79 @@ jobs:
     - name: Build Release
       run: dotnet build src/SpecTrace/SpecTrace.csproj --configuration Release --no-restore
       
-    - name: Publish Framework-Dependent Executable
+
+    - name: Build and Publish Executable
       run: |
-        dotnet publish src/SpecTrace/SpecTrace.csproj `
-          --configuration Release `
-          --runtime win-x64 `
-          --self-contained false `
-          --output publish-framework `
-          -p:PublishSingleFile=true
-          
-    - name: Publish Self-Contained Executable
-      run: |
+        # Build self-contained executable (works reliably)
         dotnet publish src/SpecTrace/SpecTrace.csproj `
           --configuration Release `
           --runtime win-x64 `
           --self-contained true `
-          --output publish-standalone `
-          -p:PublishSingleFile=true
+          --output publish `
+          -p:PublishSingleFile=true `
+          -p:DebugType=None `
+          -p:DebugSymbols=false
           
-    - name: Verify Build Outputs
+    - name: Verify Build Output
       run: |
-        Write-Output "=== Framework-Dependent Build ==="
-        Get-ChildItem -Path "publish-framework" -Recurse
-        Write-Output "`n=== Self-Contained Build ==="
-        Get-ChildItem -Path "publish-standalone" -Recurse
+        Write-Output "=== Build Output ==="
+        Get-ChildItem -Path "publish" -Recurse
+        $exe = Get-Item "publish/SpecTrace.exe"
+        Write-Output "Executable size: $([math]::Round($exe.Length/1MB,2)) MB"
         
     - name: Upload Release Assets
       if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          publish-framework/SpecTrace.exe
-          publish-standalone/SpecTrace.exe
+          publish/SpecTrace.exe
         body: |
           ## 🚀 SpecTrace Release
           
-          Professional Windows system information tool for hardware analysis and diagnostics.
+          Professional Windows system information tool for comprehensive hardware analysis and diagnostics.
           
-          ### 📥 Download Options
+          ### 📥 Download
           
-          **SpecTrace.exe** (Recommended)
-          - Requires .NET 8.0 Runtime (usually already installed)
-          - Smaller download (~10-15 MB)
-          - Better performance
+          **SpecTrace.exe** - Self-contained executable (~70MB)
+          - ✅ No dependencies required - works on any Windows 10+ system
+          - ✅ Single file download and run
+          - ✅ Includes all .NET runtime components
           
-          **SpecTrace.exe** (Self-Contained - from publish-standalone folder)
-          - No dependencies required
-          - Larger download (~150 MB)
-          - Works on any Windows 10+ system
-          
-          ### ✨ Features
-          - Comprehensive hardware detection (CPU, Memory, Graphics, Storage, Security)
-          - Modern UI with light/dark themes  
-          - Export to JSON, XML, and text formats
-          - Privacy-focused with PII redaction
-          - Portable - no installation required
+          ### ✨ Key Features
+          - **Comprehensive Hardware Detection** - CPU, Memory, Graphics, Storage, Security, Network
+          - **Modern Interface** - Clean UI with light/dark themes and intuitive navigation
+          - **Multiple Export Formats** - JSON, XML, and text formats for different use cases
+          - **Privacy Protection** - Built-in PII redaction keeps your data safe
+          - **Portable Application** - No installation required, runs from anywhere
+          - **Professional Ready** - Perfect for IT support, documentation, and diagnostics
           
           ### 🔧 System Requirements
           - Windows 10 (version 1903+) or Windows 11
-          - .NET 8.0 Runtime (for standard version)
-          - 4 GB RAM minimum
-          - Standard user permissions
+          - 4 GB RAM minimum (8 GB recommended)
+          - 10 MB free disk space
+          - Standard user permissions (Administrator not required for basic scanning)
           
           ### 🚀 Quick Start
-          1. Download SpecTrace.exe
-          2. Run the executable
+          1. Download `SpecTrace.exe`
+          2. Run the executable (no installation needed)
           3. View comprehensive system information instantly
+          4. Export data in your preferred format
           
-          📚 **Documentation:** [User Guide](https://github.com/${{ github.repository }}/blob/main/docs/USER_GUIDE.md) | [FAQ](https://github.com/${{ github.repository }}/blob/main/docs/FAQ.md) | [Troubleshooting](https://github.com/${{ github.repository }}/blob/main/docs/TROUBLESHOOTING.md)
+          ### 📚 Documentation
+          - **[📖 User Guide](https://github.com/${{ github.repository }}/blob/main/docs/USER_GUIDE.md)** - Complete usage instructions
+          - **[❓ FAQ](https://github.com/${{ github.repository }}/blob/main/docs/FAQ.md)** - Common questions answered  
+          - **[🛠️ Troubleshooting](https://github.com/${{ github.repository }}/blob/main/docs/TROUBLESHOOTING.md)** - Solve common issues
+          
+          ### 🔐 Security & Privacy
+          - No data sent to external servers
+          - All processing happens locally on your computer
+          - Built-in privacy protection with PII redaction
+          - Read-only operations - never modifies your system
+          - Portable - leaves no traces when closed
+          
+          ---
+          
+          **Need help?** Check our [documentation](https://github.com/${{ github.repository }}/tree/main/docs) or [report an issue](https://github.com/${{ github.repository }}/issues).
         draft: false
         prerelease: false
       env:
