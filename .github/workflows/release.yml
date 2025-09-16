@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*'
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       version:
@@ -30,11 +32,7 @@ jobs:
     - name: Build Release
       run: dotnet build src/SpecTrace/SpecTrace.csproj --configuration Release --no-restore
       
-    - name: Test
-      run: dotnet test src/SpecTrace/SpecTrace.csproj --configuration Release --no-build --verbosity normal
-      continue-on-error: true
-      
-    - name: Publish Single File Executable
+    - name: Publish Framework-Dependent Executable
       run: |
         dotnet publish src/SpecTrace/SpecTrace.csproj `
           --configuration Release `
@@ -42,8 +40,7 @@ jobs:
           --self-contained false `
           --output publish `
           -p:PublishSingleFile=true `
-          -p:IncludeNativeLibrariesForSelfExtract=true `
-          -p:PublishTrimmed=false
+          -p:IncludeNativeLibrariesForSelfExtract=true
           
     - name: Publish Self-Contained Executable
       run: |
@@ -53,96 +50,58 @@ jobs:
           --self-contained true `
           --output publish-standalone `
           -p:PublishSingleFile=true `
-          -p:IncludeNativeLibrariesForSelfExtract=true `
-          -p:PublishTrimmed=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
           
-    - name: Create Release Archive
+    - name: Verify Build Outputs
       run: |
-        # Create release folder structure
-        New-Item -ItemType Directory -Path "release" -Force
-        New-Item -ItemType Directory -Path "release/docs" -Force
+        Write-Output "=== Framework-Dependent Build ==="
+        Get-ChildItem -Path "publish" -Recurse
+        Write-Output "`n=== Self-Contained Build ==="
+        Get-ChildItem -Path "publish-standalone" -Recurse
         
-        # Copy executables
-        Copy-Item "publish/SpecTrace.exe" "release/SpecTrace.exe"
-        Copy-Item "publish-standalone/SpecTrace.exe" "release/SpecTrace-Standalone.exe"
-        
-        # Copy documentation
-        Copy-Item "README.md" "release/"
-        Copy-Item "LICENSE" "release/" -ErrorAction SilentlyContinue
-        
-        # Create version info
-        $version = "${{ github.ref_name }}"
-        if ("${{ github.event.inputs.version }}" -ne "") {
-          $version = "${{ github.event.inputs.version }}"
-        }
-        @"
-        SpecTrace $version
-        Built on: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
-        Commit: ${{ github.sha }}
-        
-        Files included:
-        - SpecTrace.exe (Requires .NET 8.0 Runtime)
-        - SpecTrace-Standalone.exe (No dependencies required)
-        - README.md (Documentation)
-        "@ | Out-File -FilePath "release/VERSION.txt" -Encoding UTF8
-        
-        # Create ZIP archive
-        Compress-Archive -Path "release/*" -DestinationPath "SpecTrace-$version-Windows.zip"
-        
-    - name: Upload Build Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: SpecTrace-Windows
-        path: |
-          release/
-          SpecTrace-*.zip
-          
-    - name: Create GitHub Release
-      if: startsWith(github.ref, 'refs/tags/')
+    - name: Upload Release Assets
+      if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          release/SpecTrace.exe
-          release/SpecTrace-Standalone.exe
-          SpecTrace-*.zip
+          publish/SpecTrace.exe
+          publish-standalone/SpecTrace.exe
         body: |
-          ## SpecTrace ${{ github.ref_name }}
+          ## 🚀 SpecTrace Release
           
           Professional Windows system information tool for hardware analysis and diagnostics.
           
-          ### 📥 Downloads
+          ### 📥 Download Options
           
-          **Recommended:** [SpecTrace.exe](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SpecTrace.exe) 
-          - Requires .NET 8.0 Runtime (smaller download)
-          - Best performance and compatibility
+          **SpecTrace.exe** (Recommended)
+          - Requires .NET 8.0 Runtime (usually already installed)
+          - Smaller download (~10-15 MB)
+          - Better performance
           
-          **Standalone:** [SpecTrace-Standalone.exe](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SpecTrace-Standalone.exe)
-          - No dependencies required (larger download)
+          **SpecTrace.exe** (Self-Contained - from publish-standalone folder)
+          - No dependencies required
+          - Larger download (~150 MB)
           - Works on any Windows 10+ system
           
-          **Full Package:** [SpecTrace-${{ github.ref_name }}-Windows.zip](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SpecTrace-${{ github.ref_name }}-Windows.zip)
-          - Both executables plus documentation
-          
           ### ✨ Features
-          - Comprehensive hardware detection (CPU, Memory, Graphics, Storage, Network, Security)
-          - Modern UI with light/dark themes
-          - Export to JSON, HTML, Markdown, and text formats
+          - Comprehensive hardware detection (CPU, Memory, Graphics, Storage, Security)
+          - Modern UI with light/dark themes  
+          - Export to JSON, XML, and text formats
           - Privacy-focused with PII redaction
-          - No installation required - portable executable
+          - Portable - no installation required
           
           ### 🔧 System Requirements
-          - Windows 10 version 1909 or newer / Windows 11
-          - .NET 8.0 Runtime (for SpecTrace.exe) or use standalone version
-          - No administrator privileges required for basic functionality
+          - Windows 10 (version 1903+) or Windows 11
+          - .NET 8.0 Runtime (for standard version)
+          - 4 GB RAM minimum
+          - Standard user permissions
           
           ### 🚀 Quick Start
           1. Download SpecTrace.exe
           2. Run the executable
           3. View comprehensive system information instantly
           
-          ---
-          
-          **Full Changelog:** https://github.com/${{ github.repository }}/compare/v1.0.0...${{ github.ref_name }}
+          📚 **Documentation:** [User Guide](https://github.com/${{ github.repository }}/blob/main/docs/USER_GUIDE.md) | [FAQ](https://github.com/${{ github.repository }}/blob/main/docs/FAQ.md) | [Troubleshooting](https://github.com/${{ github.repository }}/blob/main/docs/TROUBLESHOOTING.md)
         draft: false
         prerelease: false
       env:
