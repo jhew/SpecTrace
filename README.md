@@ -1,13 +1,13 @@
-# SpecTrace - Professional System Information Tool
+# SpecTrace - System Information Tool
 
 <div align="center">
 
 ![SpecTrace Logo](spectrace.ico)
 
-**A comprehensive Windows system information tool designed for professionals, enthusiasts, and support teams**
+**A comprehensive Windows system information tool designed for professionals, enthusiasts and support teams**
 
-[![Download Latest Release](https://img.shields.io/github/v/release/username/SpecTrace?style=for-the-badge&logo=github)](https://github.com/username/SpecTrace/releases/latest)
-[![Windows](https://img.shields.io/badge/Windows-10%2B-blue?style=for-the-badge&logo=windows)](https://github.com/username/SpecTrace/releases/latest)
+[![Download Latest Release](https://img.shields.io/github/v/release/jhew/SpecTrace?style=for-the-badge&logo=github)](https://github.com/jhew/SpecTrace/releases/latest)
+[![Windows](https://img.shields.io/badge/Windows-10%2B-blue?style=for-the-badge&logo=windows)](https://github.com/jhew/SpecTrace/releases/latest)
 [![.NET](https://img.shields.io/badge/.NET-8.0-purple?style=for-the-badge&logo=dotnet)](https://dotnet.microsoft.com/download/dotnet/8.0)
 
 [Download Now](#download) • [Features](#features) • [Screenshots](#screenshots) • [Support](#support)
