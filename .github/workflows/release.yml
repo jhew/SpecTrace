@@ -38,9 +38,8 @@ jobs:
           --configuration Release `
           --runtime win-x64 `
           --self-contained false `
-          --output publish `
-          -p:PublishSingleFile=true `
-          -p:IncludeNativeLibrariesForSelfExtract=true
+          --output publish-framework `
+          -p:PublishSingleFile=true
           
     - name: Publish Self-Contained Executable
       run: |
@@ -49,13 +48,12 @@ jobs:
           --runtime win-x64 `
           --self-contained true `
           --output publish-standalone `
-          -p:PublishSingleFile=true `
-          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:PublishSingleFile=true
           
     - name: Verify Build Outputs
       run: |
         Write-Output "=== Framework-Dependent Build ==="
-        Get-ChildItem -Path "publish" -Recurse
+        Get-ChildItem -Path "publish-framework" -Recurse
         Write-Output "`n=== Self-Contained Build ==="
         Get-ChildItem -Path "publish-standalone" -Recurse
         
@@ -64,7 +62,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          publish/SpecTrace.exe
+          publish-framework/SpecTrace.exe
           publish-standalone/SpecTrace.exe
         body: |
           ## 🚀 SpecTrace Release
