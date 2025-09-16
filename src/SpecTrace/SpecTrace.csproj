@@ -33,10 +33,10 @@
     <WarningsAsErrors />
     
     <!-- Repository Information -->
-    <RepositoryUrl>https://github.com/username/SpecTrace</RepositoryUrl>
+    <RepositoryUrl>https://github.com/jhew/SpecTrace</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/username/SpecTrace</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/jhew/SpecTrace</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>system-information;hardware;diagnostics;windows;cpu;gpu;memory;storage</PackageTags>
   </PropertyGroup>

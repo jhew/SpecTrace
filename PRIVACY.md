@@ -106,8 +106,8 @@ If we update this privacy policy:
 ## Contact
 
 For privacy-related questions:
-- Create an issue on [GitHub Issues](https://github.com/username/SpecTrace/issues)
-- Use [GitHub Discussions](https://github.com/username/SpecTrace/discussions)
+- Create an issue on [GitHub Issues](https://github.com/jhew/SpecTrace/issues)
+- Use [GitHub Discussions](https://github.com/jhew/SpecTrace/discussions)
 - Review the source code for complete transparency
 
 ## Compliance

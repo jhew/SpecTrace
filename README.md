@@ -16,7 +16,7 @@
 
 ## 🚀 Quick Start
 
-1. **Download** the latest release from the [Releases page](https://github.com/username/SpecTrace/releases/latest)
+1. **Download** the latest release from the [Releases page](https://github.com/jhew/SpecTrace/releases/latest)
 2. **Run** `SpecTrace.exe` - no installation required!
 3. **View** comprehensive system information instantly
 4. **Export** reports for tech support or documentation
@@ -74,7 +74,7 @@
 ## 💾 Download
 
 ### Latest Release
-Download the latest version from our [Releases page](https://github.com/username/SpecTrace/releases/latest)
+Download the latest version from our [Releases page](https://github.com/jhew/SpecTrace/releases/latest)
 
 **System Requirements:**
 - Windows 10 version 1909 or newer / Windows 11
@@ -82,8 +82,8 @@ Download the latest version from our [Releases page](https://github.com/username
 - No administrator privileges required for basic functionality
 
 ### Quick Download Links
-- [📥 SpecTrace.exe](https://github.com/username/SpecTrace/releases/latest/download/SpecTrace.exe) - Single-file executable
-- [📦 Full Package](https://github.com/username/SpecTrace/releases/latest) - All formats and documentation
+- [📥 SpecTrace.exe](https://github.com/jhew/SpecTrace/releases/latest/download/SpecTrace.exe) - Single-file executable
+- [📦 Full Package](https://github.com/jhew/SpecTrace/releases/latest) - All formats and documentation
 
 ## 🎯 Use Cases
 
@@ -143,9 +143,9 @@ Available options:
 ## 🆘 Support
 
 ### Getting Help
-- **Issues**: Report bugs on our [GitHub Issues](https://github.com/username/SpecTrace/issues) page
-- **Discussions**: Join conversations in [GitHub Discussions](https://github.com/username/SpecTrace/discussions)
-- **Documentation**: Check our [Wiki](https://github.com/username/SpecTrace/wiki) for detailed guides
+- **Issues**: Report bugs on our [GitHub Issues](https://github.com/jhew/SpecTrace/issues) page
+- **Discussions**: Join conversations in [GitHub Discussions](https://github.com/jhew/SpecTrace/discussions)
+- **Documentation**: Check our [Wiki](https://github.com/jhew/SpecTrace/wiki) for detailed guides
 
 ### Known Limitations
 - Some advanced hardware features require administrator privileges

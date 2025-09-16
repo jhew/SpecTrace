@@ -78,7 +78,7 @@ SpecTrace is designed primarily as an **end-user application** for system inform
 ### Building
 ```bash
 # Clone the repository
-git clone https://github.com/username/SpecTrace.git
+git clone https://github.com/jhew/SpecTrace.git
 cd SpecTrace
 
 # Restore dependencies
@@ -167,8 +167,8 @@ Contributors will be recognized in:
 
 ## Questions?
 
-- **General Questions**: Use [GitHub Discussions](https://github.com/username/SpecTrace/discussions)
-- **Bug Reports**: Use [GitHub Issues](https://github.com/username/SpecTrace/issues)
+- **General Questions**: Use [GitHub Discussions](https://github.com/jhew/SpecTrace/discussions)
+- **Bug Reports**: Use [GitHub Issues](https://github.com/jhew/SpecTrace/issues)
 - **Security Issues**: Email privately to maintainers
 
 Thank you for helping make SpecTrace better for everyone! 🚀
