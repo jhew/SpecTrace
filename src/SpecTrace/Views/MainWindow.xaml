@@ -1,0 +1,332 @@
+<Window x:Class="SpecTrace.Views.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="SpecTrace - System Information" 
+    Height="800" 
+    Width="1200"
+    MinHeight="600"
+    MinWidth="800"
+    WindowStartupLocation="CenterScreen"
+    Icon="pack://application:,,,/spectrace.ico"
+    Background="{DynamicResource BackgroundBrush}"
+    Foreground="{DynamicResource ForegroundBrush}">
+    
+    <Window.Resources>
+        <Style x:Key="TabItemStyle" TargetType="TabItem">
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1,1,1,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border x:Name="Border" 
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter x:Name="ContentSite"
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Center"
+                                            ContentSource="Header"
+                                            TextElement.Foreground="{TemplateBinding Foreground}"
+                                            TextElement.FontWeight="{TemplateBinding FontWeight}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource BackgroundBrush}"/>
+                                <Setter TargetName="ContentSite" Property="TextElement.Foreground" Value="{DynamicResource ForegroundBrush}"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource ControlBackgroundBrush}"/>
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsSelected" Value="True"/>
+                                    <Condition Property="IsMouseOver" Value="True"/>
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource BackgroundBrush}"/>
+                                <Setter TargetName="ContentSite" Property="TextElement.Foreground" Value="{DynamicResource ForegroundBrush}"/>
+                            </MultiTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <Style x:Key="InfoLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="0,2"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
+        </Style>
+        
+        <Style x:Key="InfoValueStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,2"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Background="{DynamicResource BackgroundBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar -->
+        <ToolBarTray Grid.Row="0">
+            <ToolBar>
+                <Button x:Name="RefreshButton" Content="🔄 Refresh" Click="RefreshButton_Click" Padding="8,4"/>
+                <Separator/>
+                <Button x:Name="QuickScanButton" Content="Quick Scan" Click="QuickScanButton_Click" Padding="8,4"/>
+                <Button x:Name="DeepScanButton" Content="Deep Scan" Click="DeepScanButton_Click" Padding="8,4"/>
+                <Separator/>
+                <CheckBox x:Name="RedactCheckBox" Content="Redact PII" Margin="8,0" 
+                          Checked="RedactCheckBox_CheckedChanged" 
+                          Unchecked="RedactCheckBox_CheckedChanged"/>
+                <Separator/>
+                <Button x:Name="ExportButton" Content="📤 Export..." Click="ExportButton_Click" Padding="8,4"/>
+                <Separator/>
+                <Button x:Name="ThemeToggleButton" Content="🌙 Dark" Click="ThemeToggleButton_Click" Padding="8,4"/>
+            </ToolBar>
+        </ToolBarTray>
+
+        <!-- Main Content -->
+        <TabControl x:Name="MainTabControl" Grid.Row="1" Style="{DynamicResource {x:Type TabControl}}" 
+                    Margin="10,0,10,10">
+            
+            <!-- CPU Tab -->
+            <TabItem Header="CPU" Style="{StaticResource TabItemStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid x:Name="CpuGrid" Margin="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Vendor:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="CpuVendorText" Grid.Row="0" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Model:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="CpuModelText" Grid.Row="1" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Cores:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="CpuCoresText" Grid.Row="2" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Base Clock:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="CpuBaseClockText" Grid.Row="3" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Boost Clock:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="CpuBoostClockText" Grid.Row="4" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Cache L3:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="CpuCacheText" Grid.Row="5" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="NPU:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="CpuNpuText" Grid.Row="6" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="7" Grid.Column="0" Text="Features:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="CpuFeaturesText" Grid.Row="7" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="8" Grid.Column="0" Text="TDP:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="CpuTdpText" Grid.Row="8" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+
+                        <StackPanel Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" 
+                                    HorizontalAlignment="Right" Margin="0,20,0,0">
+                            <Button Content="Copy Section" Click="CopyCpuSection_Click" Padding="12,6" Margin="5,0"/>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Memory Tab -->
+            <TabItem Header="Memory" Style="{StaticResource TabItemStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="20">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.Column="0" Text="Total:" Style="{StaticResource InfoLabelStyle}"/>
+                            <TextBlock x:Name="MemoryTotalText" Grid.Row="0" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                            
+                            <TextBlock Grid.Row="1" Grid.Column="0" Text="Channels:" Style="{StaticResource InfoLabelStyle}"/>
+                            <TextBlock x:Name="MemoryChannelsText" Grid.Row="1" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                            
+                            <TextBlock Grid.Row="2" Grid.Column="0" Text="Speed:" Style="{StaticResource InfoLabelStyle}"/>
+                            <TextBlock x:Name="MemorySpeedText" Grid.Row="2" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                            
+                            <TextBlock Grid.Row="3" Grid.Column="0" Text="Timings:" Style="{StaticResource InfoLabelStyle}"/>
+                            <TextBlock x:Name="MemoryTimingsText" Grid.Row="3" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                            
+                            <TextBlock Grid.Row="4" Grid.Column="0" Text="Profile:" Style="{StaticResource InfoLabelStyle}"/>
+                            <TextBlock x:Name="MemoryProfileText" Grid.Row="4" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        </Grid>
+
+                        <TextBlock Text="Memory Modules:" FontWeight="Bold" Margin="0,20,0,10"/>
+                        <DataGrid x:Name="MemoryModulesGrid" AutoGenerateColumns="False" 
+                                  IsReadOnly="True" GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Slot" Binding="{Binding Slot}" Width="80"/>
+                                <DataGridTextColumn Header="Size" Binding="{Binding SizeGB}" Width="80"/>
+                                <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="80"/>
+                                <DataGridTextColumn Header="Speed" Binding="{Binding SpeedMTps}" Width="80"/>
+                                <DataGridTextColumn Header="Manufacturer" Binding="{Binding Manufacturer}" Width="120"/>
+                                <DataGridTextColumn Header="Part Number" Binding="{Binding PartNumber}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                            <Button Content="Copy Section" Click="CopyMemorySection_Click" Padding="12,6"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Graphics Tab -->
+            <TabItem Header="Graphics" Style="{StaticResource TabItemStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="20">
+                        <TextBlock Text="Graphics Adapters:" FontWeight="Bold" Margin="0,0,0,10"/>
+                        <DataGrid x:Name="GraphicsGrid" AutoGenerateColumns="False" 
+                                  IsReadOnly="True" GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="200"/>
+                                <DataGridTextColumn Header="Vendor" Binding="{Binding Vendor}" Width="80"/>
+                                <DataGridTextColumn Header="Driver" Binding="{Binding Driver}" Width="120"/>
+                                <DataGridTextColumn Header="PCIe" Binding="{Binding Pcie.Negotiated}" Width="100"/>
+                                <DataGridCheckBoxColumn Header="DXR" Binding="{Binding Dxr}" Width="60"/>
+                                <DataGridCheckBoxColumn Header="DirectStorage" Binding="{Binding DirectStorage}" Width="100"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                            <Button Content="Copy Section" Click="CopyGraphicsSection_Click" Padding="12,6"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Storage Tab -->
+            <TabItem Header="Storage" Style="{StaticResource TabItemStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="20">
+                        <TextBlock Text="Storage Devices:" FontWeight="Bold" Margin="0,0,0,10"/>
+                        <DataGrid x:Name="StorageGrid" AutoGenerateColumns="False" 
+                                  IsReadOnly="True" GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Model" Binding="{Binding Model}" Width="200"/>
+                                <DataGridTextColumn Header="Capacity" Binding="{Binding CapacityGB}" Width="80"/>
+                                <DataGridTextColumn Header="Type" Binding="{Binding Bus}" Width="80"/>
+                                <DataGridCheckBoxColumn Header="Rotational" Binding="{Binding Rotational}" Width="60"/>
+                                <DataGridTextColumn Header="Health" Binding="{Binding Smart.Health}" Width="80"/>
+                                <DataGridTextColumn Header="Temperature" Binding="{Binding Smart.Temperature}" Width="80"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                            <Button Content="Copy Section" Click="CopyStorageSection_Click" Padding="12,6"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Security Tab -->
+            <TabItem Header="Security" Style="{StaticResource TabItemStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Secure Boot:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="SecureBootText" Grid.Row="0" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="TPM:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="TpmText" Grid.Row="1" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="VBS:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="VbsText" Grid.Row="2" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="HVCI:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="HvciText" Grid.Row="3" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Credential Guard:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="CredentialGuardText" Grid.Row="4" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+
+                        <StackPanel Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" 
+                                    HorizontalAlignment="Right" Margin="0,20,0,0">
+                            <Button Content="Copy Section" Click="CopySecuritySection_Click" Padding="12,6"/>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- System Summary Tab -->
+            <TabItem Header="Summary" Style="{StaticResource TabItemStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="20">
+                        <TextBlock Text="System Summary" FontSize="16" FontWeight="Bold" Margin="0,0,0,20"/>
+                        <TextBox x:Name="SummaryTextBox" IsReadOnly="True" TextWrapping="Wrap" 
+                                 VerticalScrollBarVisibility="Auto" MinHeight="400" 
+                                 FontFamily="Consolas" FontSize="12"
+                                 Padding="10" BorderThickness="1"/>
+                        
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+                            <Button Content="Copy Summary" Click="CopySummary_Click" Padding="12,6"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <!-- Status Bar -->
+        <StatusBar Grid.Row="2">
+            <StatusBarItem>
+                <TextBlock x:Name="StatusText" Text="Ready"/>
+            </StatusBarItem>
+            <StatusBarItem HorizontalAlignment="Right">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock x:Name="ScanModeText" Text="Quick Scan" Margin="0,0,10,0"/>
+                    <TextBlock x:Name="LastUpdateText" Text="Not scanned"/>
+                </StackPanel>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</Window>

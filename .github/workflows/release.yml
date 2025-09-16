@@ -1,0 +1,149 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+        
+    - name: Restore dependencies
+      run: dotnet restore src/SpecTrace/SpecTrace.csproj
+      
+    - name: Build Release
+      run: dotnet build src/SpecTrace/SpecTrace.csproj --configuration Release --no-restore
+      
+    - name: Test
+      run: dotnet test src/SpecTrace/SpecTrace.csproj --configuration Release --no-build --verbosity normal
+      continue-on-error: true
+      
+    - name: Publish Single File Executable
+      run: |
+        dotnet publish src/SpecTrace/SpecTrace.csproj `
+          --configuration Release `
+          --runtime win-x64 `
+          --self-contained false `
+          --output publish `
+          -p:PublishSingleFile=true `
+          -p:IncludeNativeLibrariesForSelfExtract=true `
+          -p:PublishTrimmed=false
+          
+    - name: Publish Self-Contained Executable
+      run: |
+        dotnet publish src/SpecTrace/SpecTrace.csproj `
+          --configuration Release `
+          --runtime win-x64 `
+          --self-contained true `
+          --output publish-standalone `
+          -p:PublishSingleFile=true `
+          -p:IncludeNativeLibrariesForSelfExtract=true `
+          -p:PublishTrimmed=true
+          
+    - name: Create Release Archive
+      run: |
+        # Create release folder structure
+        New-Item -ItemType Directory -Path "release" -Force
+        New-Item -ItemType Directory -Path "release/docs" -Force
+        
+        # Copy executables
+        Copy-Item "publish/SpecTrace.exe" "release/SpecTrace.exe"
+        Copy-Item "publish-standalone/SpecTrace.exe" "release/SpecTrace-Standalone.exe"
+        
+        # Copy documentation
+        Copy-Item "README.md" "release/"
+        Copy-Item "LICENSE" "release/" -ErrorAction SilentlyContinue
+        
+        # Create version info
+        $version = "${{ github.ref_name }}"
+        if ("${{ github.event.inputs.version }}" -ne "") {
+          $version = "${{ github.event.inputs.version }}"
+        }
+        @"
+        SpecTrace $version
+        Built on: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+        Commit: ${{ github.sha }}
+        
+        Files included:
+        - SpecTrace.exe (Requires .NET 8.0 Runtime)
+        - SpecTrace-Standalone.exe (No dependencies required)
+        - README.md (Documentation)
+        "@ | Out-File -FilePath "release/VERSION.txt" -Encoding UTF8
+        
+        # Create ZIP archive
+        Compress-Archive -Path "release/*" -DestinationPath "SpecTrace-$version-Windows.zip"
+        
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: SpecTrace-Windows
+        path: |
+          release/
+          SpecTrace-*.zip
+          
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          release/SpecTrace.exe
+          release/SpecTrace-Standalone.exe
+          SpecTrace-*.zip
+        body: |
+          ## SpecTrace ${{ github.ref_name }}
+          
+          Professional Windows system information tool for hardware analysis and diagnostics.
+          
+          ### 📥 Downloads
+          
+          **Recommended:** [SpecTrace.exe](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SpecTrace.exe) 
+          - Requires .NET 8.0 Runtime (smaller download)
+          - Best performance and compatibility
+          
+          **Standalone:** [SpecTrace-Standalone.exe](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SpecTrace-Standalone.exe)
+          - No dependencies required (larger download)
+          - Works on any Windows 10+ system
+          
+          **Full Package:** [SpecTrace-${{ github.ref_name }}-Windows.zip](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/SpecTrace-${{ github.ref_name }}-Windows.zip)
+          - Both executables plus documentation
+          
+          ### ✨ Features
+          - Comprehensive hardware detection (CPU, Memory, Graphics, Storage, Network, Security)
+          - Modern UI with light/dark themes
+          - Export to JSON, HTML, Markdown, and text formats
+          - Privacy-focused with PII redaction
+          - No installation required - portable executable
+          
+          ### 🔧 System Requirements
+          - Windows 10 version 1909 or newer / Windows 11
+          - .NET 8.0 Runtime (for SpecTrace.exe) or use standalone version
+          - No administrator privileges required for basic functionality
+          
+          ### 🚀 Quick Start
+          1. Download SpecTrace.exe
+          2. Run the executable
+          3. View comprehensive system information instantly
+          
+          ---
+          
+          **Full Changelog:** https://github.com/${{ github.repository }}/compare/v1.0.0...${{ github.ref_name }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
