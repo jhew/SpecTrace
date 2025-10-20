@@ -10,7 +10,7 @@
 [![Windows](https://img.shields.io/badge/Windows-10%2B-blue?style=for-the-badge&logo=windows)](https://github.com/jhew/SpecTrace/releases/latest)
 [![.NET](https://img.shields.io/badge/.NET-8.0-purple?style=for-the-badge&logo=dotnet)](https://dotnet.microsoft.com/download/dotnet/8.0)
 
-[Download Now](#download) • [Features](#features) • [Screenshots](#screenshots) • [Support](#support)
+[Download Now](https://github.com/jhew/SpecTrace/releases/latest) • [Features](#features) • [Screenshots](#screenshots) • [Support](#support)
 
 </div>
 
