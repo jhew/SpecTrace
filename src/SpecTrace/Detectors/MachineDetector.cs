@@ -35,6 +35,9 @@ namespace SpecTrace.Detectors
             // Get machine manufacturer/model
             DetectHardwareInfo(machine, redact);
             
+            // Get motherboard information
+            DetectMotherboardInfo(machine, redact);
+            
             // Get security status
             DetectSecurityStatus(machine);
         }
@@ -86,6 +89,59 @@ namespace SpecTrace.Detectors
             catch
             {
                 // Hardware info detection failed
+            }
+        }
+
+        private void DetectMotherboardInfo(MachineInfo machine, bool redact)
+        {
+            try
+            {
+                // Get motherboard information from Win32_BaseBoard
+                using var boardSearcher = new ManagementObjectSearcher("SELECT * FROM Win32_BaseBoard");
+                using var boardResults = boardSearcher.Get();
+
+                foreach (ManagementObject obj in boardResults)
+                {
+                    machine.Motherboard.Manufacturer = GetStringValue(obj, "Manufacturer");
+                    machine.Motherboard.Model = GetStringValue(obj, "Product");
+                    machine.Motherboard.Version = GetStringValue(obj, "Version");
+                    machine.Motherboard.SerialNumber = redact ? "REDACTED" : GetStringValue(obj, "SerialNumber");
+                    break;
+                }
+
+                // Get BIOS information from Win32_BIOS
+                using var biosSearcher = new ManagementObjectSearcher("SELECT * FROM Win32_BIOS");
+                using var biosResults = biosSearcher.Get();
+
+                foreach (ManagementObject obj in biosResults)
+                {
+                    machine.Motherboard.BiosVendor = GetStringValue(obj, "Manufacturer");
+                    machine.Motherboard.BiosVersion = GetStringValue(obj, "SMBIOSBIOSVersion");
+                    
+                    // Parse BIOS release date
+                    var biosDate = GetStringValue(obj, "ReleaseDate");
+                    if (!string.IsNullOrEmpty(biosDate) && biosDate.Length >= 8)
+                    {
+                        // WMI date format is typically: YYYYMMDDHHMMSS.MMMMMM+UUU
+                        try
+                        {
+                            var year = biosDate.Substring(0, 4);
+                            var month = biosDate.Substring(4, 2);
+                            var day = biosDate.Substring(6, 2);
+                            machine.Motherboard.BiosDate = $"{year}-{month}-{day}";
+                        }
+                        catch
+                        {
+                            machine.Motherboard.BiosDate = biosDate;
+                        }
+                    }
+                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Motherboard detection failed: {ex.Message}");
+                // Motherboard info detection failed, fields will remain empty
             }
         }
 

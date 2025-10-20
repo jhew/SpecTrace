@@ -71,6 +71,33 @@ namespace SpecTrace.Models
 
         [JsonProperty("serialNumber")]
         public string SerialNumber { get; set; } = "";
+
+        [JsonProperty("motherboard")]
+        public MotherboardInfo Motherboard { get; set; } = new();
+    }
+
+    public class MotherboardInfo
+    {
+        [JsonProperty("manufacturer")]
+        public string Manufacturer { get; set; } = "";
+
+        [JsonProperty("model")]
+        public string Model { get; set; } = "";
+
+        [JsonProperty("version")]
+        public string Version { get; set; } = "";
+
+        [JsonProperty("serialNumber")]
+        public string SerialNumber { get; set; } = "";
+
+        [JsonProperty("biosVersion")]
+        public string BiosVersion { get; set; } = "";
+
+        [JsonProperty("biosDate")]
+        public string BiosDate { get; set; } = "";
+
+        [JsonProperty("biosVendor")]
+        public string BiosVendor { get; set; } = "";
     }
 
     public class CpuInfo

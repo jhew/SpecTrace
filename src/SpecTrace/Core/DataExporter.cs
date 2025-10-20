@@ -32,6 +32,17 @@ namespace SpecTrace.Core
             sb.AppendLine($"- **TPM:** {systemInfo.Machine.Tpm}");
             sb.AppendLine();
 
+            // Motherboard Info
+            sb.AppendLine("## Motherboard");
+            sb.AppendLine($"- **Manufacturer:** {systemInfo.Machine.Motherboard.Manufacturer}");
+            sb.AppendLine($"- **Model:** {systemInfo.Machine.Motherboard.Model}");
+            if (!string.IsNullOrEmpty(systemInfo.Machine.Motherboard.Version))
+                sb.AppendLine($"- **Version:** {systemInfo.Machine.Motherboard.Version}");
+            sb.AppendLine($"- **BIOS Vendor:** {systemInfo.Machine.Motherboard.BiosVendor}");
+            sb.AppendLine($"- **BIOS Version:** {systemInfo.Machine.Motherboard.BiosVersion}");
+            sb.AppendLine($"- **BIOS Date:** {systemInfo.Machine.Motherboard.BiosDate}");
+            sb.AppendLine();
+
             // CPU Info
             sb.AppendLine("## CPU");
             sb.AppendLine($"- **Vendor:** {systemInfo.Cpu.Vendor}");
@@ -203,7 +214,8 @@ namespace SpecTrace.Core
             sb.AppendLine($"Operating System: {systemInfo.Machine.Os}");
             sb.AppendLine($"System Manufacturer: {systemInfo.Machine.Manufacturer}");
             sb.AppendLine($"System Model: {systemInfo.Machine.Model}");
-            sb.AppendLine($"BIOS: {systemInfo.Machine.Tpm}");
+            sb.AppendLine($"Motherboard: {systemInfo.Machine.Motherboard.Manufacturer} {systemInfo.Machine.Motherboard.Model}");
+            sb.AppendLine($"BIOS: {systemInfo.Machine.Motherboard.BiosVendor} {systemInfo.Machine.Motherboard.BiosVersion} ({systemInfo.Machine.Motherboard.BiosDate})");
             sb.AppendLine($"Processor: {systemInfo.Cpu.Model}");
             sb.AppendLine($"Memory: {systemInfo.Memory.TotalBytes / (1024 * 1024)} MB RAM");
             sb.AppendLine();
