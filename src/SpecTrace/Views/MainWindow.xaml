@@ -81,7 +81,14 @@
 
         <!-- Toolbar -->
         <ToolBarTray Grid.Row="0">
-            <ToolBar>
+            <ToolBar OverflowMode="Never">
+                <ToolBar.Template>
+                    <ControlTemplate TargetType="ToolBar">
+                        <Border BorderThickness="0" Background="Transparent">
+                            <ToolBarPanel IsItemsHost="True"/>
+                        </Border>
+                    </ControlTemplate>
+                </ToolBar.Template>
                 <Button x:Name="RefreshButton" Content="🔄 Refresh" Click="RefreshButton_Click" Padding="8,4"/>
                 <Separator/>
                 <Button x:Name="QuickScanButton" Content="Quick Scan" Click="QuickScanButton_Click" Padding="8,4"/>
@@ -94,6 +101,8 @@
                 <Button x:Name="ExportButton" Content="📤 Export..." Click="ExportButton_Click" Padding="8,4"/>
                 <Separator/>
                 <Button x:Name="ThemeToggleButton" Content="🌙 Dark" Click="ThemeToggleButton_Click" Padding="8,4"/>
+                <Separator/>
+                <Button x:Name="AboutButton" Content="ℹ️ About" Click="AboutButton_Click" Padding="8,4"/>
             </ToolBar>
         </ToolBarTray>
 

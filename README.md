@@ -27,6 +27,7 @@
 
 ### 🔍 **Comprehensive Hardware Detection**
 - **CPU**: Detailed processor information including cores, cache, features, and NPU detection
+- **Motherboard**: Manufacturer, model, BIOS version, and BIOS date
 - **Memory**: RAM modules, timings, XMP profiles, and performance metrics
 - **Graphics**: GPU details, drivers, DirectX capabilities, and PCIe configuration
 - **Storage**: NVMe/SATA drives with SMART health monitoring and BitLocker status
@@ -34,7 +35,7 @@
 - **Security**: TPM status, Secure Boot, VBS/HVCI, and Credential Guard
 
 ### 🎨 **Modern Interface**
-- Clean, professional tabbed interface
+- Clean, professional tabbed interface with dedicated tabs for CPU, Motherboard, Memory, Graphics, Storage, and Security
 - Light and dark theme support
 - Real-time hardware monitoring
 - Intuitive navigation and search

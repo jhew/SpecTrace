@@ -28,35 +28,145 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore src/SpecTrace/SpecTrace.csproj
       
+    - name: Extract Version from Tag
+      id: get_version
+      run: |
+        $version = "${{ github.ref_name }}" -replace '^v', ''
+        if ("${{ github.event.inputs.version }}" -ne "") {
+          $version = "${{ github.event.inputs.version }}" -replace '^v', ''
+        }
+        Write-Output "Building version: $version"
+        echo "version=$version" >> $env:GITHUB_OUTPUT
+      
     - name: Build Release
-      run: dotnet build src/SpecTrace/SpecTrace.csproj --configuration Release --no-restore
+      run: |
+        dotnet build src/SpecTrace/SpecTrace.csproj `
+          --configuration Release `
+          --no-restore `
+          -p:Version=${{ steps.get_version.outputs.version }} `
+          -p:AssemblyVersion=${{ steps.get_version.outputs.version }}.0 `
+          -p:FileVersion=${{ steps.get_version.outputs.version }}.0
       
 
-    - name: Build and Publish Executable
+    - name: Build and Publish Executables
       run: |
-        # Build self-contained executable (works reliably)
+        # Build framework-dependent executable (smaller, requires .NET)
+        dotnet publish src/SpecTrace/SpecTrace.csproj `
+          --configuration Release `
+          --runtime win-x64 `
+          --self-contained false `
+          --output publish-framework `
+          -p:PublishSingleFile=true `
+          -p:Version=${{ steps.get_version.outputs.version }} `
+          -p:AssemblyVersion=${{ steps.get_version.outputs.version }}.0 `
+          -p:FileVersion=${{ steps.get_version.outputs.version }}.0 `
+          -p:DebugType=None `
+          -p:DebugSymbols=false
+          
+        # Build self-contained executable (larger, no dependencies)
         dotnet publish src/SpecTrace/SpecTrace.csproj `
           --configuration Release `
           --runtime win-x64 `
           --self-contained true `
-          --output publish `
+          --output publish-standalone `
           -p:PublishSingleFile=true `
+          -p:Version=${{ steps.get_version.outputs.version }} `
+          -p:AssemblyVersion=${{ steps.get_version.outputs.version }}.0 `
+          -p:FileVersion=${{ steps.get_version.outputs.version }}.0 `
           -p:DebugType=None `
           -p:DebugSymbols=false
           
-    - name: Verify Build Output
+    - name: Verify Build Outputs
       run: |
-        Write-Output "=== Build Output ==="
-        Get-ChildItem -Path "publish" -Recurse
-        $exe = Get-Item "publish/SpecTrace.exe"
-        Write-Output "Executable size: $([math]::Round($exe.Length/1MB,2)) MB"
+        Write-Output "=== Framework-Dependent Build ==="
+        Get-ChildItem -Path "publish-framework" -Recurse
+        $frameworkExe = Get-Item "publish-framework/SpecTrace.exe"
+        Write-Output "Framework executable size: $([math]::Round($frameworkExe.Length/1KB,2)) KB"
+        
+        Write-Output "`n=== Self-Contained Build ==="
+        Get-ChildItem -Path "publish-standalone" -Recurse  
+        $standaloneExe = Get-Item "publish-standalone/SpecTrace.exe"
+        Write-Output "Standalone executable size: $([math]::Round($standaloneExe.Length/1MB,2)) MB"
+        
+    - name: Create Release Packages
+      run: |
+        # Create release package directories
+        New-Item -ItemType Directory -Path "release-lightweight" -Force
+        New-Item -ItemType Directory -Path "release-standalone" -Force
+        
+        $version = "${{ github.ref_name }}"
+        if ("${{ github.event.inputs.version }}" -ne "") {
+          $version = "${{ github.event.inputs.version }}"
+        }
+        
+        # Lightweight package (framework-dependent)
+        Copy-Item "publish-framework/SpecTrace.exe" "release-lightweight/"
+        Copy-Item "README.md" "release-lightweight/" -ErrorAction SilentlyContinue
+        Copy-Item "LICENSE" "release-lightweight/" -ErrorAction SilentlyContinue
+        
+        @"
+        SpecTrace $version - Lightweight Windows Release
+        
+        What's included:
+        - SpecTrace.exe (Framework-dependent - requires .NET 8.0 Runtime)
+        - README.md and LICENSE
+        
+        IMPORTANT: Requires .NET 8.0 Runtime
+        Download from: https://dotnet.microsoft.com/download/dotnet/8.0
+        
+        Advantages:
+        - Very small download (~500 KB)
+        - Fast startup and better performance
+        - Most Windows systems already have .NET 8.0
+        
+        Quick Start:
+        1. Ensure .NET 8.0 Runtime is installed
+        2. Extract this ZIP and run SpecTrace.exe
+        
+        Built: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+        Commit: ${{ github.sha }}
+        "@ | Out-File -FilePath "release-lightweight/README-FIRST.txt" -Encoding UTF8
+        
+        # Standalone package (self-contained) 
+        Copy-Item "publish-standalone/SpecTrace.exe" "release-standalone/"
+        Copy-Item "README.md" "release-standalone/" -ErrorAction SilentlyContinue
+        Copy-Item "LICENSE" "release-standalone/" -ErrorAction SilentlyContinue
+        
+        @"
+        SpecTrace $version - Standalone Windows Release
+        
+        What's included:
+        - SpecTrace.exe (Self-contained - no dependencies required)
+        - README.md and LICENSE
+        
+        Advantages:
+        - No dependencies required
+        - Works on any Windows 10+ system
+        - Single file download and run
+        
+        Note: Larger download (~70 MB) due to included .NET runtime
+        
+        Quick Start:
+        1. Extract this ZIP and run SpecTrace.exe
+        2. No installation required!
+        
+        Built: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
+        Commit: ${{ github.sha }}
+        "@ | Out-File -FilePath "release-standalone/README-FIRST.txt" -Encoding UTF8
+        
+        # Create ZIP files - only lightweight for GitHub (size limit)
+        Compress-Archive -Path "publish-framework/SpecTrace.exe" -DestinationPath "SpecTrace-$version-Lightweight.zip" -Force
+        Compress-Archive -Path "release-lightweight/*" -DestinationPath "SpecTrace-$version-Lightweight-Complete.zip" -Force
+        
+        # Note: Standalone version too large for GitHub (25MB limit)
+        # Users can build locally or use alternative distribution method
         
     - name: Upload Release Assets
       if: github.event_name == 'release'
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          publish/SpecTrace.exe
+          SpecTrace-*.zip
         body: |
           ## 🚀 SpecTrace Release
           
