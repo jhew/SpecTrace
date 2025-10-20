@@ -115,6 +115,23 @@ namespace SpecTrace.Views
                 string.Join(", ", systemInfo.Cpu.Flags) : "None detected";
             CpuTdpText.Text = systemInfo.Cpu.Power.Tdp > 0 ? $"{systemInfo.Cpu.Power.Tdp}W" : "Unknown";
 
+            // Update Motherboard tab
+            MoboManufacturerText.Text = !string.IsNullOrEmpty(systemInfo.Machine.Motherboard.Manufacturer) ? 
+                systemInfo.Machine.Motherboard.Manufacturer : "Unknown";
+            MoboModelText.Text = !string.IsNullOrEmpty(systemInfo.Machine.Motherboard.Model) ? 
+                systemInfo.Machine.Motherboard.Model : "Unknown";
+            MoboVersionText.Text = !string.IsNullOrEmpty(systemInfo.Machine.Motherboard.Version) ? 
+                systemInfo.Machine.Motherboard.Version : "Not available";
+            MoboSerialText.Text = !string.IsNullOrEmpty(systemInfo.Machine.Motherboard.SerialNumber) ? 
+                systemInfo.Machine.Motherboard.SerialNumber : "Not available";
+            BiosVendorText.Text = !string.IsNullOrEmpty(systemInfo.Machine.Motherboard.BiosVendor) ? 
+                systemInfo.Machine.Motherboard.BiosVendor : "Unknown";
+            BiosVersionText.Text = !string.IsNullOrEmpty(systemInfo.Machine.Motherboard.BiosVersion) ? 
+                systemInfo.Machine.Motherboard.BiosVersion : "Unknown";
+            BiosDateText.Text = !string.IsNullOrEmpty(systemInfo.Machine.Motherboard.BiosDate) ? 
+                systemInfo.Machine.Motherboard.BiosDate : "Unknown";
+            MoboFormFactorText.Text = EstimateFormFactor(systemInfo.Machine.Model);
+
             // Update Memory tab
             MemoryTotalText.Text = $"{systemInfo.Memory.TotalBytes / (1024 * 1024 * 1024)} GB";
             MemoryChannelsText.Text = systemInfo.Memory.Channels.ToString();
@@ -299,6 +316,26 @@ namespace SpecTrace.Views
             }
         }
 
+        private void CopyMotherboardSection_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentSystemInfo != null)
+            {
+                var moboInfo = $"""
+                    Motherboard Information:
+                    Manufacturer: {MoboManufacturerText.Text}
+                    Model: {MoboModelText.Text}
+                    Version: {MoboVersionText.Text}
+                    Serial Number: {MoboSerialText.Text}
+                    BIOS Vendor: {BiosVendorText.Text}
+                    BIOS Version: {BiosVersionText.Text}
+                    BIOS Date: {BiosDateText.Text}
+                    Form Factor: {MoboFormFactorText.Text}
+                    """;
+                Clipboard.SetText(moboInfo);
+                StatusText.Text = "Motherboard information copied to clipboard";
+            }
+        }
+
         private void CopyGraphicsSection_Click(object sender, RoutedEventArgs e)
         {
             if (_currentSystemInfo != null)
@@ -434,6 +471,45 @@ namespace SpecTrace.Views
                     }
                 }
             }
+        }
+
+        private string EstimateFormFactor(string modelName)
+        {
+            if (string.IsNullOrEmpty(modelName))
+                return "Unknown";
+
+            var model = modelName.ToLower();
+
+            // Desktop form factors
+            if (model.Contains("mini-itx") || model.Contains("mini itx"))
+                return "Mini-ITX";
+            if (model.Contains("micro-atx") || model.Contains("micro atx") || model.Contains("matx"))
+                return "Micro-ATX";
+            if (model.Contains("e-atx") || model.Contains("eatx") || model.Contains("extended atx"))
+                return "E-ATX";
+            if (model.Contains("atx"))
+                return "ATX";
+
+            // Laptop/Mobile form factors
+            if (model.Contains("laptop") || model.Contains("notebook") || model.Contains("ultrabook"))
+                return "Laptop";
+            if (model.Contains("all-in-one") || model.Contains("aio"))
+                return "All-in-One";
+
+            // Server form factors
+            if (model.Contains("server") || model.Contains("rack"))
+                return "Server/Rack";
+
+            // Check for common laptop/desktop indicators
+            if (model.Contains("latitude") || model.Contains("thinkpad") || model.Contains("elitebook") ||
+                model.Contains("pavilion") || model.Contains("inspiron") || model.Contains("vivobook"))
+                return "Laptop";
+
+            // Default based on generic system names
+            if (model.Contains("system product"))
+                return "Desktop (ATX/Micro-ATX)";
+
+            return "Unknown";
         }
     }
 

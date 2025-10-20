@@ -157,6 +157,58 @@
                 </ScrollViewer>
             </TabItem>
 
+            <!-- Motherboard Tab -->
+            <TabItem Header="Motherboard" Style="{StaticResource TabItemStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid x:Name="MotherboardGrid" Margin="20">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Manufacturer:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="MoboManufacturerText" Grid.Row="0" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Model:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="MoboModelText" Grid.Row="1" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Version:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="MoboVersionText" Grid.Row="2" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Serial Number:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="MoboSerialText" Grid.Row="3" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="BIOS Vendor:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="BiosVendorText" Grid.Row="4" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="BIOS Version:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="BiosVersionText" Grid.Row="5" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="6" Grid.Column="0" Text="BIOS Date:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="BiosDateText" Grid.Row="6" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+                        
+                        <TextBlock Grid.Row="7" Grid.Column="0" Text="Form Factor:" Style="{StaticResource InfoLabelStyle}"/>
+                        <TextBlock x:Name="MoboFormFactorText" Grid.Row="7" Grid.Column="1" Style="{StaticResource InfoValueStyle}"/>
+
+                        <StackPanel Grid.Row="8" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" 
+                                    HorizontalAlignment="Right" Margin="0,20,0,0">
+                            <Button Content="Copy Section" Click="CopyMotherboardSection_Click" Padding="12,6" Margin="5,0"/>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
             <!-- Memory Tab -->
             <TabItem Header="Memory" Style="{StaticResource TabItemStyle}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
