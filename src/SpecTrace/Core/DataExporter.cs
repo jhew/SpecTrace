@@ -126,6 +126,17 @@ namespace SpecTrace.Core
             if (systemInfo.Cpu.Npu.Present)
                 sb.AppendLine($"**NPU**: Yes ({systemInfo.Cpu.Npu.Tops} TOPS)");
 
+            // Motherboard
+            if (!string.IsNullOrEmpty(systemInfo.Machine.Motherboard.Manufacturer) && 
+                !string.IsNullOrEmpty(systemInfo.Machine.Motherboard.Model))
+            {
+                sb.AppendLine($"**Motherboard**: {systemInfo.Machine.Motherboard.Manufacturer} {systemInfo.Machine.Motherboard.Model}");
+                if (!string.IsNullOrEmpty(systemInfo.Machine.Motherboard.BiosVersion))
+                {
+                    sb.AppendLine($"**BIOS**: {systemInfo.Machine.Motherboard.BiosVendor} {systemInfo.Machine.Motherboard.BiosVersion} ({systemInfo.Machine.Motherboard.BiosDate})");
+                }
+            }
+
             // Memory
             var memoryGb = systemInfo.Memory.TotalBytes / (1024 * 1024 * 1024);
             sb.AppendLine($"**Memory**: {memoryGb}GB DDR5-{systemInfo.Memory.SpeedMTps} {systemInfo.Memory.Profile}");

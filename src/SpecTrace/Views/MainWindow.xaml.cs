@@ -224,6 +224,99 @@ namespace SpecTrace.Views
             StatusText.Text = $"Switched to {(_isDarkTheme ? "dark" : "light")} theme";
         }
 
+        private void AboutButton_Click(object sender, RoutedEventArgs e)
+        {
+            var aboutWindow = new Window
+            {
+                Title = "About SpecTrace",
+                Width = 450,
+                Height = 300,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = this,
+                ResizeMode = ResizeMode.NoResize,
+                Background = this.Background
+            };
+
+            var grid = new Grid { Margin = new Thickness(20) };
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            // App Title
+            var titleBlock = new TextBlock
+            {
+                Text = "SpecTrace",
+                FontSize = 32,
+                FontWeight = FontWeights.Bold,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 10, 0, 10)
+            };
+            titleBlock.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
+            Grid.SetRow(titleBlock, 0);
+            grid.Children.Add(titleBlock);
+
+            // Version
+            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            var versionBlock = new TextBlock
+            {
+                Text = $"Version {version?.Major}.{version?.Minor}.{version?.Build}",
+                FontSize = 16,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 20)
+            };
+            versionBlock.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
+            Grid.SetRow(versionBlock, 1);
+            grid.Children.Add(versionBlock);
+
+            // Description
+            var descriptionBlock = new TextBlock
+            {
+                Text = "A comprehensive Windows system information tool for hardware detection and diagnostics.",
+                FontSize = 14,
+                TextWrapping = TextWrapping.Wrap,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                TextAlignment = TextAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 20)
+            };
+            descriptionBlock.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
+            Grid.SetRow(descriptionBlock, 2);
+            grid.Children.Add(descriptionBlock);
+
+            // GitHub Link
+            var linkBlock = new TextBlock
+            {
+                HorizontalAlignment = HorizontalAlignment.Center,
+                Margin = new Thickness(0, 0, 0, 20)
+            };
+            
+            var hyperlink = new System.Windows.Documents.Hyperlink
+            {
+                NavigateUri = new Uri("https://github.com/jhew/SpecTrace")
+            };
+            hyperlink.Inlines.Add("Visit GitHub Repository");
+            hyperlink.RequestNavigate += (s, args) =>
+            {
+                try
+                {
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = args.Uri.ToString(),
+                        UseShellExecute = true
+                    });
+                }
+                catch { }
+            };
+            
+            linkBlock.Inlines.Add(hyperlink);
+            linkBlock.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
+            Grid.SetRow(linkBlock, 3);
+            grid.Children.Add(linkBlock);
+
+            aboutWindow.Content = grid;
+            aboutWindow.ShowDialog();
+        }
+
         private void ApplyTheme(bool isDarkTheme)
         {
             try
