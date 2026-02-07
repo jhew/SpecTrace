@@ -157,6 +157,7 @@ Download the latest version from our [Releases page](https://github.com/jhew/Spe
 
 ### Need Help?
 - 📖 **[Complete User Guide](docs/USER_GUIDE.md)** - Detailed usage instructions
+- 🚀 **[Deployment Guide](docs/DEPLOYMENT.md)** - Silent installs, packaging, and enterprise deployment
 - ❓ **[Frequently Asked Questions](docs/FAQ.md)** - Common questions answered
 - 🛠️ **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Solve common issues
 
