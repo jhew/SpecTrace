@@ -57,6 +57,33 @@
 - **Lightweight**: Minimal resource usage and memory footprint
 - **Reliable**: Built-in timeout protection and error handling
 
+## 🧰 For MSPs & SMB IT
+
+**Outcomes**
+- **Faster audits** with consistent, exportable hardware baselines
+- **Reduced ticket time** with quick, shareable system snapshots
+- **Standardized reporting** for multi-client environments
+
+**Compliance & privacy**
+- **Read-only** data collection with no system changes
+- **No telemetry** and offline operation for regulated environments
+- **PII redaction** for safe sharing
+
+**Deployment fit**
+- **Portable, single EXE** for USB kits and remote sessions
+- **CLI export automation** to JSON, XML, Markdown, HTML, or text
+- **Lightweight** to run on aging endpoints
+
+### MSP-focused comparison
+
+| Capability | SpecTrace | CPU-Z | Speccy |
+| --- | --- | --- | --- |
+| Portable, no install required | ✅ | ⚠️ (portable zip) | ⚠️ (installer common) |
+| Read-only and no telemetry | ✅ | ⚠️ (varies by build) | ⚠️ (varies by build) |
+| CLI and automation-friendly exports | ✅ (JSON/XML/MD/HTML/TXT) | ❌ | ❌ |
+| PII redaction for sharing | ✅ | ❌ | ❌ |
+| MSP-ready audit speed and reporting | ✅ | ⚠️ | ⚠️ |
+
 ## 💻 System Requirements
 
 - **Windows 10** (version 1903 or later) or **Windows 11**
