@@ -154,6 +154,7 @@ Best for: Enterprise systems, standardized data exchange, compliance
 
 ## Need More Help?
 
+- **Deployment Guide**: See the [Deployment Guide](DEPLOYMENT.md) for silent install, packaging, and RMM examples.
 - **FAQ**: Check the [Frequently Asked Questions](FAQ.md)
 - **Troubleshooting**: See the [Troubleshooting Guide](TROUBLESHOOTING.md)
 - **Issues**: Report problems on our [GitHub Issues page](../../issues)
