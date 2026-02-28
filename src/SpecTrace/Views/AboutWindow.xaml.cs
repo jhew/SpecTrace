@@ -43,8 +43,12 @@ namespace SpecTrace.Views
                 var hwnd = new WindowInteropHelper(this).Handle;
                 if (hwnd == IntPtr.Zero) return;
                 int value = isDark ? 1 : 0;
-                DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE_OLD, ref value, sizeof(int));
-                DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref value, sizeof(int));
+                int hr = DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE_OLD, ref value, sizeof(int));
+                if (hr != 0)
+                    System.Diagnostics.Debug.WriteLine($"ApplyDarkTitleBar attr19 HRESULT: 0x{hr:X8}");
+                hr = DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref value, sizeof(int));
+                if (hr != 0)
+                    System.Diagnostics.Debug.WriteLine($"ApplyDarkTitleBar attr20 HRESULT: 0x{hr:X8}");
             }
             catch (Exception ex)
             {
