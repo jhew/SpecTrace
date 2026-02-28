@@ -13,9 +13,8 @@ No! SpecTrace is a portable application. Just download the `.exe` file and run i
 
 ### Does SpecTrace work on my version of Windows?
 SpecTrace supports:
-- ✅ Windows 11 (all versions)
-- ✅ Windows 10 (version 1903 and later)
-- ❌ Windows 8.1 and earlier (not supported)
+- ✅ Windows 11
+- ❌ Windows 10 and earlier (not supported)
 
 ### Is my data safe?
 Absolutely. SpecTrace:
@@ -122,7 +121,7 @@ Currently, SpecTrace is Windows-only. Support for other operating systems is not
 
 ### SpecTrace won't start - what should I do?
 Try these steps:
-1. **Check Windows version**: Ensure you have Windows 10 (1903+) or Windows 11
+1. **Check Windows version**: Ensure you have Windows 11
 2. **Install .NET**: Download .NET 8.0 Runtime from Microsoft
 3. **Run as Administrator**: Right-click → "Run as administrator"
 4. **Check antivirus**: Some antivirus programs may block unknown executables

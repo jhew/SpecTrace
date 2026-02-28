@@ -104,6 +104,7 @@ namespace SpecTrace.Detectors
         private void DetectCpuFlags(CpuInfo cpu)
         {
             cpu.Flags.Clear();
+            cpu.FlagsEstimated = true;
             
             // Base on CPU generation and model for more accurate feature detection
             if (cpu.Vendor.Contains("Intel"))
@@ -291,6 +292,7 @@ namespace SpecTrace.Detectors
         private void DetectNpuVendorAndTops(CpuInfo cpu, string deviceName, string deviceId)
         {
             var name = deviceName.ToLower();
+            cpu.Npu.TopsEstimated = true;
             
             if (name.Contains("intel") || deviceId.Contains("ven_8086"))
             {
@@ -378,6 +380,7 @@ namespace SpecTrace.Detectors
 
         private void EstimateCacheFromModel(CpuInfo cpu)
         {
+            cpu.Cache.IsEstimated = true;
             // More accurate cache size estimates based on specific CPU models
             if (cpu.Vendor.Contains("Intel"))
             {
@@ -419,7 +422,7 @@ namespace SpecTrace.Detectors
 
         private void DetectPowerInfo(CpuInfo cpu)
         {
-            // Estimate TDP based on specific CPU models
+            cpu.Power.TdpEstimated = true;
             if (cpu.Model.Contains("8700K"))
             {
                 cpu.Power.Tdp = 95; // i7-8700K TDP

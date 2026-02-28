@@ -3,7 +3,7 @@
 ## Getting Started
 
 ### System Requirements
-- **Operating System**: Windows 10 or later (Windows 11 recommended)
+- **Operating System**: Windows 11
 - **Memory**: 4 GB RAM minimum, 8 GB recommended
 - **Storage**: 10 MB for application, additional space for exported reports
 - **Display**: 1024x768 minimum resolution

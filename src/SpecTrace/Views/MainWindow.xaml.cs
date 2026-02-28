@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
 using System.Threading.Tasks;
 using System.Linq;
 using Microsoft.Win32;
@@ -13,6 +15,31 @@ namespace SpecTrace.Views
 {
     public partial class MainWindow : Window
     {
+        [DllImport("dwmapi.dll", PreserveSig = true)]
+        private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+        private const int DWMWA_USE_IMMERSIVE_DARK_MODE_OLD = 19;
+        private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+
+        private void SetTitleBarDarkMode(bool isDark)
+        {
+            try
+            {
+                var hwnd = new WindowInteropHelper(this).Handle;
+                if (hwnd == IntPtr.Zero) return;
+                int value = isDark ? 1 : 0;
+                int hr = DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE_OLD, ref value, sizeof(int));
+                if (hr != 0)
+                    System.Diagnostics.Debug.WriteLine($"SetTitleBarDarkMode attr19 HRESULT: 0x{hr:X8}");
+                hr = DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref value, sizeof(int));
+                if (hr != 0)
+                    System.Diagnostics.Debug.WriteLine($"SetTitleBarDarkMode attr20 HRESULT: 0x{hr:X8}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"SetTitleBarDarkMode failed: {ex.Message}");
+            }
+        }
+
         private SystemScanner _scanner;
         private DataExporter _exporter;
         private SystemInfo? _currentSystemInfo;
@@ -108,12 +135,18 @@ namespace SpecTrace.Views
             
             CpuBaseClockText.Text = $"{systemInfo.Cpu.Clocks.BaseMHz} MHz";
             CpuBoostClockText.Text = $"{systemInfo.Cpu.Clocks.BoostMHz} MHz";
-            CpuCacheText.Text = systemInfo.Cpu.Cache.L3 > 0 ? $"{systemInfo.Cpu.Cache.L3} KB" : "Unknown";
-            CpuNpuText.Text = systemInfo.Cpu.Npu.Present ? 
-                $"Yes ({systemInfo.Cpu.Npu.Vendor}, {systemInfo.Cpu.Npu.Tops} TOPS)" : "No";
-            CpuFeaturesText.Text = systemInfo.Cpu.Flags.Any() ? 
-                string.Join(", ", systemInfo.Cpu.Flags) : "None detected";
-            CpuTdpText.Text = systemInfo.Cpu.Power.Tdp > 0 ? $"{systemInfo.Cpu.Power.Tdp}W" : "Unknown";
+            CpuCacheText.Text = systemInfo.Cpu.Cache.L3 > 0
+                ? $"{systemInfo.Cpu.Cache.L3} KB{(systemInfo.Cpu.Cache.IsEstimated ? " (est.)" : "")}"
+                : "Unknown";
+            CpuNpuText.Text = systemInfo.Cpu.Npu.Present
+                ? $"Yes ({systemInfo.Cpu.Npu.Vendor}, {systemInfo.Cpu.Npu.Tops} TOPS{(systemInfo.Cpu.Npu.TopsEstimated ? " est." : "")})"
+                : "No";
+            CpuFeaturesText.Text = systemInfo.Cpu.Flags.Any()
+                ? string.Join(", ", systemInfo.Cpu.Flags) + (systemInfo.Cpu.FlagsEstimated ? " (est.)" : "")
+                : "None detected";
+            CpuTdpText.Text = systemInfo.Cpu.Power.Tdp > 0
+                ? $"{systemInfo.Cpu.Power.Tdp}W{(systemInfo.Cpu.Power.TdpEstimated ? " (est.)" : "")}"
+                : "Unknown";
 
             // Update Motherboard tab
             MoboManufacturerText.Text = !string.IsNullOrEmpty(systemInfo.Machine.Motherboard.Manufacturer) ? 
@@ -136,15 +169,25 @@ namespace SpecTrace.Views
             MemoryTotalText.Text = $"{systemInfo.Memory.TotalBytes / (1024 * 1024 * 1024)} GB";
             MemoryChannelsText.Text = systemInfo.Memory.Channels.ToString();
             MemorySpeedText.Text = $"{systemInfo.Memory.SpeedMTps} MT/s";
-            MemoryTimingsText.Text = systemInfo.Memory.Timings;
-            MemoryProfileText.Text = systemInfo.Memory.Profile;
+            MemoryTimingsText.Text = string.IsNullOrEmpty(systemInfo.Memory.Timings)
+                ? ""
+                : systemInfo.Memory.Timings + (systemInfo.Memory.TimingsEstimated ? " (est.)" : "");
+            MemoryProfileText.Text = string.IsNullOrEmpty(systemInfo.Memory.Profile)
+                ? ""
+                : systemInfo.Memory.Profile + (systemInfo.Memory.TimingsEstimated ? " (est.)" : "");
             MemoryModulesGrid.ItemsSource = systemInfo.Memory.Dimms;
 
             // Update Graphics tab
             GraphicsGrid.ItemsSource = systemInfo.Graphics.Gpus;
 
+            // Update Monitors tab
+            MonitorsGrid.ItemsSource = systemInfo.Graphics.Displays;
+
             // Update Storage tab
             StorageGrid.ItemsSource = systemInfo.Storage.Drives;
+
+            // Update Network tab
+            NetworkGrid.ItemsSource = systemInfo.Network.Adapters;
 
             // Update Security tab
             SecureBootText.Text = systemInfo.Machine.SecureBoot ? "✅ Enabled" : "❌ Disabled";
@@ -226,94 +269,11 @@ namespace SpecTrace.Views
 
         private void AboutButton_Click(object sender, RoutedEventArgs e)
         {
-            var aboutWindow = new Window
-            {
-                Title = "About SpecTrace",
-                Width = 450,
-                Height = 300,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-                Owner = this,
-                ResizeMode = ResizeMode.NoResize,
-                Background = this.Background
-            };
-
-            var grid = new Grid { Margin = new Thickness(20) };
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-            // App Title
-            var titleBlock = new TextBlock
-            {
-                Text = "SpecTrace",
-                FontSize = 32,
-                FontWeight = FontWeights.Bold,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 10, 0, 10)
-            };
-            titleBlock.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
-            Grid.SetRow(titleBlock, 0);
-            grid.Children.Add(titleBlock);
-
-            // Version
-            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-            var versionBlock = new TextBlock
-            {
-                Text = $"Version {version?.Major}.{version?.Minor}.{version?.Build}",
-                FontSize = 16,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 20)
-            };
-            versionBlock.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
-            Grid.SetRow(versionBlock, 1);
-            grid.Children.Add(versionBlock);
-
-            // Description
-            var descriptionBlock = new TextBlock
-            {
-                Text = "A comprehensive Windows system information tool for hardware detection and diagnostics.",
-                FontSize = 14,
-                TextWrapping = TextWrapping.Wrap,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                TextAlignment = TextAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 20)
-            };
-            descriptionBlock.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
-            Grid.SetRow(descriptionBlock, 2);
-            grid.Children.Add(descriptionBlock);
-
-            // GitHub Link
-            var linkBlock = new TextBlock
-            {
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 20)
-            };
-            
-            var hyperlink = new System.Windows.Documents.Hyperlink
-            {
-                NavigateUri = new Uri("https://github.com/jhew/SpecTrace")
-            };
-            hyperlink.Inlines.Add("Visit GitHub Repository");
-            hyperlink.RequestNavigate += (s, args) =>
-            {
-                try
-                {
-                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                    {
-                        FileName = args.Uri.ToString(),
-                        UseShellExecute = true
-                    });
-                }
-                catch { }
-            };
-            
-            linkBlock.Inlines.Add(hyperlink);
-            linkBlock.SetResourceReference(TextBlock.ForegroundProperty, "TextBrush");
-            Grid.SetRow(linkBlock, 3);
-            grid.Children.Add(linkBlock);
-
-            aboutWindow.Content = grid;
+            var aboutWindow = new AboutWindow(_isDarkTheme) { Owner = this };
+            // Force HWND creation synchronously here, before ShowDialog. This triggers
+            // SourceInitialized while we are still on the UI thread so the DWM dark-mode
+            // attribute is stamped onto the handle before Windows ever paints the title bar.
+            new WindowInteropHelper(aboutWindow).EnsureHandle();
             aboutWindow.ShowDialog();
         }
 
@@ -349,6 +309,9 @@ namespace SpecTrace.Views
                 // Force UI refresh by invalidating visual
                 this.InvalidateVisual();
                 this.UpdateLayout();
+
+                // Switch title bar to match theme
+                SetTitleBarDarkMode(isDarkTheme);
             }
             catch (Exception ex)
             {
@@ -440,6 +403,17 @@ namespace SpecTrace.Views
             }
         }
 
+        private void CopyMonitorsSection_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentSystemInfo != null)
+            {
+                var lines = _currentSystemInfo.Graphics.Displays.Select(d =>
+                    $"{(!string.IsNullOrEmpty(d.Model) ? d.Model : d.Name)} | {d.Manufacturer} | {d.SizeInches} | {d.NativeResolution} @ {d.RefreshRate} Hz | {d.YearOfManufacture}");
+                Clipboard.SetText($"Monitors:\n{string.Join("\n", lines)}");
+                StatusText.Text = "Monitor information copied to clipboard";
+            }
+        }
+
         private void CopyStorageSection_Click(object sender, RoutedEventArgs e)
         {
             if (_currentSystemInfo != null)
@@ -448,6 +422,29 @@ namespace SpecTrace.Views
                     $"Drive: {drive.Model} ({drive.CapacityGB}GB {drive.Bus})"));
                 Clipboard.SetText($"Storage Information:\n{storageInfo}");
                 StatusText.Text = "Storage information copied to clipboard";
+            }
+        }
+
+        private void CopyNetworkSection_Click(object sender, RoutedEventArgs e)
+        {
+            if (_currentSystemInfo != null)
+            {
+                var lines = _currentSystemInfo.Network.Adapters.Select(a =>
+                {
+                    var line = $"{a.Name} | {a.Type} | {a.Mac} | {a.LinkSpeedMbps} Mbps";
+                    if (!string.IsNullOrEmpty(a.WiFi.Standard))
+                    {
+                        var wifiParts = new List<string> { $"Wi-Fi {a.WiFi.Standard}" };
+                        if (!string.IsNullOrWhiteSpace(a.WiFi.Band)) wifiParts.Add(a.WiFi.Band);
+                        if (!string.IsNullOrWhiteSpace(a.WiFi.Mimo)) wifiParts.Add(a.WiFi.Mimo);
+                        line += " | " + string.Join(" ", wifiParts);
+                    }
+                    if (!string.IsNullOrEmpty(a.Bluetooth.Version))
+                        line += $" | BT {a.Bluetooth.Version}";
+                    return line;
+                });
+                Clipboard.SetText($"Network Information:\n{string.Join("\n", lines)}");
+                StatusText.Text = "Network information copied to clipboard";
             }
         }
 

@@ -20,11 +20,6 @@ namespace SpecTrace.Core
                 new GraphicsDetector(),
                 new StorageDetector(),
                 new NetworkDetector(),
-                new UsbDetector(),
-                new AudioDetector(),
-                new SensorsDetector(),
-                new SecurityDetector(),
-                new ProcessDetector(),
                 new MachineDetector()
             };
         }

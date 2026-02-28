@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Management;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using SpecTrace.Models;
@@ -95,8 +98,8 @@ namespace SpecTrace.Detectors
 
         private void DetectMemoryTimings(MemoryInfo memory)
         {
-            // This would require more advanced detection methods
-            // For now, provide estimated timings based on speed
+            // Estimated timings based on speed — actual JEDEC/XMP timings require SPD reads
+            memory.TimingsEstimated = true;
             if (memory.SpeedMTps >= 6000)
                 memory.Timings = "30-38-38-96";
             else if (memory.SpeedMTps >= 5600)
@@ -112,6 +115,89 @@ namespace SpecTrace.Detectors
 
     public class GraphicsDetector : IDetector
     {
+        // P/Invoke for per-monitor resolution via EnumDisplayDevices/EnumDisplaySettings
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern bool EnumDisplayDevices(string? lpDevice, uint iDevNum, ref DISPLAY_DEVICE lpDisplayDevice, uint dwFlags);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern bool EnumDisplaySettings(string lpszDeviceName, int iModeNum, ref DEVMODE lpDevMode);
+
+        private const int ENUM_CURRENT_SETTINGS = -1;
+        private const uint DISPLAY_DEVICE_ATTACHED_TO_DESKTOP = 0x1;
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        private struct DISPLAY_DEVICE
+        {
+            public uint cb;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string DeviceName;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceString;
+            public uint StateFlags;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceKey;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        private struct DEVMODE
+        {
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string dmDeviceName;
+            public short dmSpecVersion;
+            public short dmDriverVersion;
+            public short dmSize;
+            public short dmDriverExtra;
+            public int dmFields;
+            public int dmPositionX;
+            public int dmPositionY;
+            public int dmDisplayOrientation;
+            public int dmDisplayFixedOutput;
+            public short dmColor;
+            public short dmDuplex;
+            public short dmYResolution;
+            public short dmTTOption;
+            public short dmCollate;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string dmFormName;
+            public short dmLogPixels;
+            public int dmBitsPerPel;
+            public int dmPelsWidth;
+            public int dmPelsHeight;
+            public int dmDisplayFlags;
+            public int dmDisplayFrequency;
+            public int dmICMMethod;
+            public int dmICMIntent;
+            public int dmMediaType;
+            public int dmDitherType;
+            public int dmReserved1;
+            public int dmReserved2;
+            public int dmPanningWidth;
+            public int dmPanningHeight;
+        }
+
+        private List<(int width, int height, int refresh)> GetActiveDisplayModes()
+        {
+            var modes = new List<(int width, int height, int refresh)>();
+            try
+            {
+                uint i = 0;
+                var dd = new DISPLAY_DEVICE();
+                dd.cb = (uint)Marshal.SizeOf(dd);
+                while (EnumDisplayDevices(null, i++, ref dd, 0))
+                {
+                    if ((dd.StateFlags & DISPLAY_DEVICE_ATTACHED_TO_DESKTOP) != 0)
+                    {
+                        var dm = new DEVMODE();
+                        dm.dmSize = (short)Marshal.SizeOf(dm);
+                        if (EnumDisplaySettings(dd.DeviceName, ENUM_CURRENT_SETTINGS, ref dm))
+                            modes.Add((dm.dmPelsWidth, dm.dmPelsHeight, dm.dmDisplayFrequency));
+                    }
+                    dd = new DISPLAY_DEVICE();
+                    dd.cb = (uint)Marshal.SizeOf(dd);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"EnumDisplayDevices failed: {ex.Message}");
+            }
+            return modes;
+        }
         public async Task DetectAsync(SystemInfo systemInfo, bool deepScan, bool redact, CancellationToken cancellationToken)
         {
             await Task.Run(() =>
@@ -160,10 +246,7 @@ namespace SpecTrace.Detectors
                 graphics.Gpus.Add(gpu);
             }
 
-            if (deepScan)
-            {
-                DetectDisplays(graphics);
-            }
+            DetectDisplays(graphics);
         }
 
         private string GetVendorFromName(string name)
@@ -316,16 +399,171 @@ namespace SpecTrace.Detectors
 
         private void DetectDisplays(GraphicsInfo graphics)
         {
-            // This would require EDID parsing and display API calls
-            // For now, create a placeholder
-            graphics.Displays.Add(new DisplayInfo
+            graphics.Displays.Clear();
+
+            // Physical dimensions keyed by WMI instance name
+            var physicalDims = new Dictionary<string, (int maxH, int maxV)>(StringComparer.OrdinalIgnoreCase);
+            try
             {
-                Name = "Primary Display",
-                NativeResolution = "1920x1080",
-                RefreshRate = 60,
-                Hdr = false,
-                Vrr = false
-            });
+                using var paramSearcher = new ManagementObjectSearcher("root\\wmi", "SELECT * FROM WmiMonitorBasicDisplayParams");
+                paramSearcher.Options.Timeout = TimeSpan.FromSeconds(2);
+                using var paramResults = paramSearcher.Get();
+                foreach (ManagementObject obj in paramResults)
+                {
+                    var inst = obj["InstanceName"]?.ToString() ?? "";
+                    var h = Convert.ToInt32(obj["MaxHorizontalImageSize"] ?? 0);
+                    var v = Convert.ToInt32(obj["MaxVerticalImageSize"] ?? 0);
+                    if (!string.IsNullOrEmpty(inst))
+                        physicalDims[inst] = (h, v);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"WmiMonitorBasicDisplayParams failed: {ex.Message}");
+            }
+
+            // Connection type keyed by WMI instance name (VideoOutputTechnology values)
+            var connectionMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                using var connSearcher = new ManagementObjectSearcher("root\\wmi", "SELECT * FROM WmiMonitorConnectionParams");
+                connSearcher.Options.Timeout = TimeSpan.FromSeconds(2);
+                using var connResults = connSearcher.Get();
+                foreach (ManagementObject obj in connResults)
+                {
+                    var inst = obj["InstanceName"]?.ToString() ?? "";
+                    var tech = Convert.ToInt32(obj["VideoOutputTechnology"] ?? -1);
+                    var connStr = tech switch
+                    {
+                        1 => "VGA",
+                        2 => "S-Video",
+                        4 => "Component",
+                        5 => "DVI",
+                        6 => "HDMI",
+                        7 => "LVDS (Embedded)",
+                        10 => "SDI",
+                        11 => "DisplayPort",
+                        12 => "DisplayPort (Embedded)",
+                        13 => "UDI",
+                        16 => "Miracast",
+                        17 => "Indirect",
+                        -2147483648 => "Internal",
+                        _ => ""
+                    };
+                    if (!string.IsNullOrEmpty(inst))
+                        connectionMap[inst] = connStr;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"WmiMonitorConnectionParams failed: {ex.Message}");
+            }
+
+            // Resolution and refresh rate via EnumDisplayDevices/EnumDisplaySettings (one entry per active monitor output)
+            var vcResolutions = GetActiveDisplayModes();
+
+            // Fallback name list from Win32_DesktopMonitor
+            var desktopMonitorNames = new List<string>();
+            try
+            {
+                using var dmSearcher = new ManagementObjectSearcher("SELECT Name FROM Win32_DesktopMonitor");
+                dmSearcher.Options.Timeout = TimeSpan.FromSeconds(2);
+                using var dmResults = dmSearcher.Get();
+                foreach (ManagementObject obj in dmResults)
+                    desktopMonitorNames.Add(obj["Name"]?.ToString() ?? "");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Win32_DesktopMonitor failed: {ex.Message}");
+            }
+
+            // Primary detection via WmiMonitorID (EDID data)
+            bool anyDetected = false;
+            try
+            {
+                using var idSearcher = new ManagementObjectSearcher("root\\wmi", "SELECT * FROM WmiMonitorID");
+                idSearcher.Options.Timeout = TimeSpan.FromSeconds(2);
+                using var idResults = idSearcher.Get();
+                int idx = 0;
+                foreach (ManagementObject obj in idResults)
+                {
+                    var instanceName = obj["InstanceName"]?.ToString() ?? "";
+                    var manufacturer = DecodeUInt16Array(obj["ManufacturerName"] as ushort[]);
+                    var model = DecodeUInt16Array(obj["UserFriendlyName"] as ushort[]);
+                    var serial = DecodeUInt16Array(obj["SerialNumberID"] as ushort[]);
+                    var year = Convert.ToInt32(obj["YearOfManufacture"] ?? 0);
+                    var week = Convert.ToInt32(obj["WeekOfManufacture"] ?? 0);
+
+                    var display = new DisplayInfo
+                    {
+                        Manufacturer = manufacturer,
+                        Model = model,
+                        Name = !string.IsNullOrEmpty(model) ? model : manufacturer,
+                        EdidSerial = serial,
+                        YearOfManufacture = year > 0 ? $"{year} (Week {week})" : "",
+                    };
+
+                    // Physical size from WmiMonitorBasicDisplayParams
+                    if (physicalDims.TryGetValue(instanceName, out var dims) && dims.maxH > 0 && dims.maxV > 0)
+                    {
+                        double diagInches = Math.Sqrt((double)dims.maxH * dims.maxH + (double)dims.maxV * dims.maxV) / 2.54;
+                        display.SizeInches = $"{diagInches:F1}\"";
+                    }
+
+                    // Connection type from WmiMonitorConnectionParams
+                    if (connectionMap.TryGetValue(instanceName, out var conn))
+                        display.Connection = conn;
+
+                    // Resolution and refresh from Win32_VideoController matched by index
+                    if (idx < vcResolutions.Count)
+                    {
+                        var vc = vcResolutions[idx];
+                        if (vc.width > 0 && vc.height > 0)
+                            display.NativeResolution = $"{vc.width}x{vc.height}";
+                        if (vc.refresh > 0)
+                            display.RefreshRate = vc.refresh;
+                    }
+
+                    if (string.IsNullOrEmpty(display.Name) && idx < desktopMonitorNames.Count)
+                        display.Name = desktopMonitorNames[idx];
+
+                    graphics.Displays.Add(display);
+                    anyDetected = true;
+                    idx++;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"WmiMonitorID detection failed: {ex.Message}");
+            }
+
+            // Fallback when WmiMonitorID is unavailable
+            if (!anyDetected)
+            {
+                for (int i = 0; i < Math.Max(desktopMonitorNames.Count, vcResolutions.Count); i++)
+                {
+                    var name = i < desktopMonitorNames.Count ? desktopMonitorNames[i] : $"Display {i + 1}";
+                    var vc = i < vcResolutions.Count ? vcResolutions[i] : (width: 0, height: 0, refresh: 0);
+                    graphics.Displays.Add(new DisplayInfo
+                    {
+                        Name = name,
+                        NativeResolution = vc.width > 0 ? $"{vc.width}x{vc.height}" : "",
+                        RefreshRate = vc.refresh,
+                    });
+                }
+            }
+        }
+
+        private static string DecodeUInt16Array(ushort[]? arr)
+        {
+            if (arr == null) return "";
+            var sb = new StringBuilder();
+            foreach (var c in arr)
+            {
+                if (c == 0) break;
+                sb.Append((char)c);
+            }
+            return sb.ToString().Trim();
         }
     }
 

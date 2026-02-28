@@ -31,6 +31,9 @@ namespace SpecTrace.Models
 
         [JsonProperty("gearMode")]
         public string GearMode { get; set; } = "";
+
+        [JsonProperty("timingsEstimated")]
+        public bool TimingsEstimated { get; set; }
     }
 
     public class DimmInfo
@@ -184,5 +187,11 @@ namespace SpecTrace.Models
 
         [JsonProperty("connection")]
         public string Connection { get; set; } = "";
+
+        [JsonProperty("sizeInches")]
+        public string SizeInches { get; set; } = "";
+
+        [JsonProperty("yearOfManufacture")]
+        public string YearOfManufacture { get; set; } = "";
     }
 }
