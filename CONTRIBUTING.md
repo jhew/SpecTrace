@@ -18,13 +18,13 @@ Open an issue describing the use case and what problem it solves.
 - Keep changes focused  one fix or feature per PR
 - Follow the existing code style
 - Add error handling for any new hardware queries (never let a detection failure crash the app)
-- Test on Windows 10 and Windows 11
+- Test on Windows 11
 - Test without administrator privileges, and with if the feature requires elevation
 - Update documentation if the change affects behaviour visible to users
 
 ## Building
 
-Prerequisites: .NET 8.0 SDK, Windows 10 1903+ or Windows 11, Visual Studio 2022 or VS Code.
+Prerequisites: .NET 8.0 SDK, Windows 11, Visual Studio 2022 or VS Code.
 
 ```
 git clone https://github.com/jhew/SpecTrace.git

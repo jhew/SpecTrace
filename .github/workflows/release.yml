@@ -141,7 +141,7 @@ jobs:
         
         Advantages:
         - No dependencies required
-        - Works on any Windows 10+ system
+        - Works on Windows 11
         - Single file download and run
         
         Note: Larger download (~70 MB) due to included .NET runtime
@@ -175,7 +175,7 @@ jobs:
           ### 📥 Download
           
           **SpecTrace.exe** - Self-contained executable (~70MB)
-          - ✅ No dependencies required - works on any Windows 10+ system
+          - ✅ No dependencies required - works on Windows 11
           - ✅ Single file download and run
           - ✅ Includes all .NET runtime components
           
@@ -188,7 +188,7 @@ jobs:
           - **Professional Ready** - Perfect for IT support, documentation, and diagnostics
           
           ### 🔧 System Requirements
-          - Windows 10 (version 1903+) or Windows 11
+          - Windows 11
           - 4 GB RAM minimum (8 GB recommended)
           - 10 MB free disk space
           - Standard user permissions (Administrator not required for basic scanning)

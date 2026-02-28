@@ -28,7 +28,10 @@ namespace SpecTrace.Views
                 int value = isDark ? 1 : 0;
                 DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref value, sizeof(int));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"SetTitleBarDarkMode failed: {ex.Message}");
+            }
         }
 
         private SystemScanner _scanner;
@@ -424,7 +427,12 @@ namespace SpecTrace.Views
                 {
                     var line = $"{a.Name} | {a.Type} | {a.Mac} | {a.LinkSpeedMbps} Mbps";
                     if (!string.IsNullOrEmpty(a.WiFi.Standard))
-                        line += $" | Wi-Fi {a.WiFi.Standard} {a.WiFi.Band} {a.WiFi.Mimo}".TrimEnd();
+                    {
+                        var wifiParts = new List<string> { $"Wi-Fi {a.WiFi.Standard}" };
+                        if (!string.IsNullOrWhiteSpace(a.WiFi.Band)) wifiParts.Add(a.WiFi.Band);
+                        if (!string.IsNullOrWhiteSpace(a.WiFi.Mimo)) wifiParts.Add(a.WiFi.Mimo);
+                        line += " | " + string.Join(" ", wifiParts);
+                    }
                     if (!string.IsNullOrEmpty(a.Bluetooth.Version))
                         line += $" | BT {a.Bluetooth.Version}";
                     return line;

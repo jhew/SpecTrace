@@ -176,7 +176,10 @@ namespace SpecTrace.Detectors
                     security.Hvci = Convert.ToInt32(dgKey.GetValue("HypervisorEnforcedCodeIntegrity") ?? 0) != 0;
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"DeviceGuard registry read failed: {ex.Message}");
+            }
 
             try
             {
@@ -185,7 +188,10 @@ namespace SpecTrace.Detectors
                 if (lsaKey != null)
                     security.CredentialGuard = Convert.ToInt32(lsaKey.GetValue("LsaCfgFlags") ?? 0) != 0;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"LSA registry read failed: {ex.Message}");
+            }
         }
 
         private bool IsSecureBootEnabled()

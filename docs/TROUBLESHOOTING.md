@@ -10,7 +10,7 @@ This guide helps resolve common issues when using SpecTrace. If you don't find a
 **Solutions**:
 1. **Check Windows Version**:
    - Press `Win + R`, type `winver`, press Enter
-   - Ensure you have Windows 10 (build 1903+) or Windows 11
+   - Ensure you have Windows 11
    
 2. **Install .NET 8.0 Runtime**:
    - Download from [Microsoft .NET Downloads](https://dotnet.microsoft.com/download/dotnet/8.0)

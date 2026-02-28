@@ -385,7 +385,9 @@ namespace SpecTrace.Detectors
             try
             {
                 using var paramSearcher = new ManagementObjectSearcher("root\\wmi", "SELECT * FROM WmiMonitorBasicDisplayParams");
-                foreach (ManagementObject obj in paramSearcher.Get())
+                paramSearcher.Options.Timeout = TimeSpan.FromSeconds(2);
+                using var paramResults = paramSearcher.Get();
+                foreach (ManagementObject obj in paramResults)
                 {
                     var inst = obj["InstanceName"]?.ToString() ?? "";
                     var h = Convert.ToInt32(obj["MaxHorizontalImageSize"] ?? 0);
@@ -404,7 +406,9 @@ namespace SpecTrace.Detectors
             try
             {
                 using var connSearcher = new ManagementObjectSearcher("root\\wmi", "SELECT * FROM WmiMonitorConnectionParams");
-                foreach (ManagementObject obj in connSearcher.Get())
+                connSearcher.Options.Timeout = TimeSpan.FromSeconds(2);
+                using var connResults = connSearcher.Get();
+                foreach (ManagementObject obj in connResults)
                 {
                     var inst = obj["InstanceName"]?.ToString() ?? "";
                     var tech = Convert.ToInt32(obj["VideoOutputTechnology"] ?? -1);
@@ -442,18 +446,25 @@ namespace SpecTrace.Detectors
             try
             {
                 using var dmSearcher = new ManagementObjectSearcher("SELECT Name FROM Win32_DesktopMonitor");
-                foreach (ManagementObject obj in dmSearcher.Get())
+                dmSearcher.Options.Timeout = TimeSpan.FromSeconds(2);
+                using var dmResults = dmSearcher.Get();
+                foreach (ManagementObject obj in dmResults)
                     desktopMonitorNames.Add(obj["Name"]?.ToString() ?? "");
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Win32_DesktopMonitor failed: {ex.Message}");
+            }
 
             // Primary detection via WmiMonitorID (EDID data)
             bool anyDetected = false;
             try
             {
                 using var idSearcher = new ManagementObjectSearcher("root\\wmi", "SELECT * FROM WmiMonitorID");
+                idSearcher.Options.Timeout = TimeSpan.FromSeconds(2);
+                using var idResults = idSearcher.Get();
                 int idx = 0;
-                foreach (ManagementObject obj in idSearcher.Get())
+                foreach (ManagementObject obj in idResults)
                 {
                     var instanceName = obj["InstanceName"]?.ToString() ?? "";
                     var manufacturer = DecodeUInt16Array(obj["ManufacturerName"] as ushort[]);

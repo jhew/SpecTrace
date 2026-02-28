@@ -105,7 +105,11 @@ namespace SpecTrace.Core
                     if (!string.IsNullOrEmpty(d.SizeInches))
                         sb.AppendLine($"  - **Size:** {d.SizeInches}");
                     if (!string.IsNullOrEmpty(d.NativeResolution))
-                        sb.AppendLine($"  - **Resolution:** {d.NativeResolution} @ {d.RefreshRate} Hz");
+                    {
+                        var resLine = $"  - **Resolution:** {d.NativeResolution}";
+                        if (d.RefreshRate > 0) resLine += $" @ {d.RefreshRate} Hz";
+                        sb.AppendLine(resLine);
+                    }
                     if (!string.IsNullOrEmpty(d.Connection))
                         sb.AppendLine($"  - **Connection:** {d.Connection}");
                     if (d.Hdr) sb.AppendLine($"  - **HDR:** ✅");
@@ -180,7 +184,8 @@ namespace SpecTrace.Core
                 var res = !string.IsNullOrEmpty(d.NativeResolution) ? $" {d.NativeResolution}" : "";
                 var hz = d.RefreshRate > 0 ? $" @ {d.RefreshRate} Hz" : "";
                 var size = !string.IsNullOrEmpty(d.SizeInches) ? $" {d.SizeInches}" : "";
-                sb.AppendLine($"**Monitor**: {label} ({d.Manufacturer}){size}{res}{hz}");
+                var mfr = !string.IsNullOrEmpty(d.Manufacturer) ? $" ({d.Manufacturer})" : "";
+                sb.AppendLine($"**Monitor**: {label}{mfr}{size}{res}{hz}");
             }
 
             // Storage summary

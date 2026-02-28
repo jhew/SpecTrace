@@ -46,7 +46,10 @@ namespace SpecTrace.Views
                 DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE_OLD, ref value, sizeof(int));
                 DwmSetWindowAttribute(hwnd, DWMWA_USE_IMMERSIVE_DARK_MODE, ref value, sizeof(int));
             }
-            catch { }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ApplyDarkTitleBar failed: {ex.Message}");
+            }
         }
 
         private void GithubLink_RequestNavigate(object sender, RequestNavigateEventArgs e)

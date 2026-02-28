@@ -5,7 +5,7 @@
 **A Windows system information tool for professionals, enthusiasts, and support teams.**
 
 [![Download Latest Release](https://img.shields.io/github/v/release/jhew/SpecTrace?style=for-the-badge&logo=github)](https://github.com/jhew/SpecTrace/releases/latest)
-[![Windows](https://img.shields.io/badge/Windows-10%2B-blue?style=for-the-badge&logo=windows)](https://github.com/jhew/SpecTrace/releases/latest)
+[![Windows](https://img.shields.io/badge/Windows-11-blue?style=for-the-badge&logo=windows)](https://github.com/jhew/SpecTrace/releases/latest)
 [![.NET](https://img.shields.io/badge/.NET-8.0-purple?style=for-the-badge&logo=dotnet)](https://dotnet.microsoft.com/download/dotnet/8.0)
 
 [Download](https://github.com/jhew/SpecTrace/releases/latest)  [Screenshots](#screenshots)  [CLI Reference](#cli-reference)  [Support](#support)
@@ -40,7 +40,7 @@ SpecTrace is a portable, single-executable tool that collects detailed hardware 
 
 ## Requirements
 
-- Windows 10 version 1903 or later, or Windows 11
+- Windows 11
 - .NET 8.0 Runtime
 - Standard user account (administrator not required for basic scan)
 
@@ -69,7 +69,7 @@ SpecTrace.exe [options]
 
 ## Screenshots
 
-![SpecTrace Main Interface](assets/screenshots/Screenshot20250916.png)
+![SpecTrace Main Interface](assets/screenshots/Screenshot20260228.png)
 
 ## For IT Teams
 
