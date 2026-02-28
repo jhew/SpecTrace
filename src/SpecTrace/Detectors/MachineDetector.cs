@@ -15,7 +15,7 @@ namespace SpecTrace.Detectors
             {
                 try
                 {
-                    DetectMachineInfo(systemInfo.Machine, redact);
+                    DetectMachineInfo(systemInfo.Machine, systemInfo.Security, redact);
                 }
                 catch (Exception ex)
                 {
@@ -24,7 +24,7 @@ namespace SpecTrace.Detectors
             }, cancellationToken);
         }
 
-        private void DetectMachineInfo(MachineInfo machine, bool redact)
+        private void DetectMachineInfo(MachineInfo machine, SecurityInfo security, bool redact)
         {
             // Get hostname
             machine.Hostname = redact ? "REDACTED" : Environment.MachineName;
@@ -40,6 +40,9 @@ namespace SpecTrace.Detectors
             
             // Get security status
             DetectSecurityStatus(machine);
+
+            // Get virtualisation-based security values
+            DetectVirtualizationSecurity(security);
         }
 
         private void DetectOsInfo(MachineInfo machine)
@@ -159,6 +162,30 @@ namespace SpecTrace.Detectors
             {
                 // Security status detection failed
             }
+        }
+
+        private void DetectVirtualizationSecurity(SecurityInfo security)
+        {
+            try
+            {
+                using var dgKey = Registry.LocalMachine.OpenSubKey(
+                    @"SYSTEM\CurrentControlSet\Control\DeviceGuard");
+                if (dgKey != null)
+                {
+                    security.Vbs = Convert.ToInt32(dgKey.GetValue("EnableVirtualizationBasedSecurity") ?? 0) != 0;
+                    security.Hvci = Convert.ToInt32(dgKey.GetValue("HypervisorEnforcedCodeIntegrity") ?? 0) != 0;
+                }
+            }
+            catch { }
+
+            try
+            {
+                using var lsaKey = Registry.LocalMachine.OpenSubKey(
+                    @"SYSTEM\CurrentControlSet\Control\LSA");
+                if (lsaKey != null)
+                    security.CredentialGuard = Convert.ToInt32(lsaKey.GetValue("LsaCfgFlags") ?? 0) != 0;
+            }
+            catch { }
         }
 
         private bool IsSecureBootEnabled()

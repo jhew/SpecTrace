@@ -92,6 +92,30 @@ namespace SpecTrace.Core
                 sb.AppendLine();
             }
 
+            // Monitors
+            if (systemInfo.Graphics.Displays.Count > 0)
+            {
+                sb.AppendLine("## Monitors");
+                foreach (var d in systemInfo.Graphics.Displays)
+                {
+                    var label = !string.IsNullOrEmpty(d.Model) ? d.Model : d.Name;
+                    sb.AppendLine($"- **{label}**");
+                    if (!string.IsNullOrEmpty(d.Manufacturer))
+                        sb.AppendLine($"  - **Manufacturer:** {d.Manufacturer}");
+                    if (!string.IsNullOrEmpty(d.SizeInches))
+                        sb.AppendLine($"  - **Size:** {d.SizeInches}");
+                    if (!string.IsNullOrEmpty(d.NativeResolution))
+                        sb.AppendLine($"  - **Resolution:** {d.NativeResolution} @ {d.RefreshRate} Hz");
+                    if (!string.IsNullOrEmpty(d.Connection))
+                        sb.AppendLine($"  - **Connection:** {d.Connection}");
+                    if (d.Hdr) sb.AppendLine($"  - **HDR:** ✅");
+                    if (d.Vrr) sb.AppendLine($"  - **VRR:** ✅");
+                    if (!string.IsNullOrEmpty(d.YearOfManufacture))
+                        sb.AppendLine($"  - **Year:** {d.YearOfManufacture}");
+                }
+                sb.AppendLine();
+            }
+
             // Storage Info
             if (systemInfo.Storage.Drives.Count > 0)
             {
@@ -147,6 +171,16 @@ namespace SpecTrace.Core
                 sb.AppendLine($"**GPU**: {gpu.Name} (Driver {gpu.Driver})");
                 if (gpu.Dxr) sb.Append(", DXR: Yes");
                 sb.AppendLine();
+            }
+
+            // Monitors
+            foreach (var d in systemInfo.Graphics.Displays)
+            {
+                var label = !string.IsNullOrEmpty(d.Model) ? d.Model : d.Name;
+                var res = !string.IsNullOrEmpty(d.NativeResolution) ? $" {d.NativeResolution}" : "";
+                var hz = d.RefreshRate > 0 ? $" @ {d.RefreshRate} Hz" : "";
+                var size = !string.IsNullOrEmpty(d.SizeInches) ? $" {d.SizeInches}" : "";
+                sb.AppendLine($"**Monitor**: {label} ({d.Manufacturer}){size}{res}{hz}");
             }
 
             // Storage summary
@@ -240,6 +274,31 @@ namespace SpecTrace.Core
                 sb.AppendLine($"Driver Version: {gpu.Driver}");
                 sb.AppendLine($"DirectX Version: {gpu.DxFeatureLevel}");
                 sb.AppendLine();
+            }
+
+            if (systemInfo.Graphics.Displays.Count > 0)
+            {
+                sb.AppendLine("Monitors");
+                sb.AppendLine("--------");
+                foreach (var d in systemInfo.Graphics.Displays)
+                {
+                    var label = !string.IsNullOrEmpty(d.Model) ? d.Model : d.Name;
+                    sb.AppendLine($"Monitor Name: {label}");
+                    sb.AppendLine($"Manufacturer: {d.Manufacturer}");
+                    if (!string.IsNullOrEmpty(d.SizeInches))
+                        sb.AppendLine($"Screen Size: {d.SizeInches}");
+                    if (!string.IsNullOrEmpty(d.NativeResolution))
+                        sb.AppendLine($"Native Resolution: {d.NativeResolution}");
+                    if (d.RefreshRate > 0)
+                        sb.AppendLine($"Refresh Rate: {d.RefreshRate} Hz");
+                    if (!string.IsNullOrEmpty(d.Connection))
+                        sb.AppendLine($"Connection: {d.Connection}");
+                    if (!string.IsNullOrEmpty(d.YearOfManufacture))
+                        sb.AppendLine($"Year of Manufacture: {d.YearOfManufacture}");
+                    if (!string.IsNullOrEmpty(d.EdidSerial))
+                        sb.AppendLine($"Serial Number: {d.EdidSerial}");
+                    sb.AppendLine();
+                }
             }
 
             return sb.ToString();

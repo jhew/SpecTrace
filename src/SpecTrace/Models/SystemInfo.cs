@@ -126,6 +126,9 @@ namespace SpecTrace.Models
         [JsonProperty("flags")]
         public List<string> Flags { get; set; } = new();
 
+        [JsonProperty("flagsEstimated")]
+        public bool FlagsEstimated { get; set; }
+
         [JsonProperty("npu")]
         public NpuInfo Npu { get; set; } = new();
 
@@ -171,6 +174,9 @@ namespace SpecTrace.Models
         [JsonProperty("tops")]
         public float Tops { get; set; }
 
+        [JsonProperty("topsEstimated")]
+        public bool TopsEstimated { get; set; }
+
         [JsonProperty("driverVersion")]
         public string DriverVersion { get; set; } = "";
     }
@@ -188,6 +194,9 @@ namespace SpecTrace.Models
 
         [JsonProperty("l3")]
         public int L3 { get; set; }
+
+        [JsonProperty("isEstimated")]
+        public bool IsEstimated { get; set; }
     }
 
     public class CpuClocks
@@ -209,6 +218,9 @@ namespace SpecTrace.Models
     {
         [JsonProperty("tdp")]
         public int Tdp { get; set; }
+
+        [JsonProperty("tdpEstimated")]
+        public bool TdpEstimated { get; set; }
 
         [JsonProperty("pl1")]
         public int Pl1 { get; set; }

@@ -1,0 +1,59 @@
+<Window x:Class="SpecTrace.Views.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="About SpecTrace"
+        Width="450" Height="300"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="{DynamicResource BackgroundBrush}"
+        Foreground="{DynamicResource ForegroundBrush}">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="SpecTrace"
+                   FontSize="32"
+                   FontWeight="Bold"
+                   HorizontalAlignment="Center"
+                   Margin="0,10,0,6"
+                   Foreground="{DynamicResource ForegroundBrush}"/>
+
+        <TextBlock Grid.Row="1"
+                   x:Name="VersionText"
+                   FontSize="14"
+                   HorizontalAlignment="Center"
+                   Margin="0,0,0,16"
+                   Foreground="{DynamicResource ForegroundBrush}"/>
+
+        <TextBlock Grid.Row="2"
+                   Text="A comprehensive Windows system information tool for hardware detection and diagnostics."
+                   FontSize="13"
+                   TextWrapping="Wrap"
+                   HorizontalAlignment="Center"
+                   TextAlignment="Center"
+                   Margin="0,0,0,16"
+                   Foreground="{DynamicResource ForegroundBrush}"/>
+
+        <TextBlock Grid.Row="3" HorizontalAlignment="Center" VerticalAlignment="Top">
+            <Hyperlink x:Name="GithubLink"
+                       Foreground="{DynamicResource AccentBrush}"
+                       RequestNavigate="GithubLink_RequestNavigate"
+                       NavigateUri="https://github.com/jhew/SpecTrace">
+                Visit GitHub Repository
+            </Hyperlink>
+        </TextBlock>
+
+        <Button Grid.Row="4"
+                Content="Close"
+                HorizontalAlignment="Right"
+                Padding="20,6"
+                Click="CloseButton_Click"/>
+    </Grid>
+</Window>

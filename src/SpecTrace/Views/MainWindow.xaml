@@ -295,6 +295,34 @@
                 </ScrollViewer>
             </TabItem>
 
+            <!-- Monitors Tab -->
+            <TabItem Header="Monitors" Style="{StaticResource TabItemStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="20">
+                        <TextBlock Text="Connected Monitors:" FontWeight="Bold" Margin="0,0,0,10"/>
+                        <DataGrid x:Name="MonitorsGrid" AutoGenerateColumns="False"
+                                  IsReadOnly="True" GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Model" Binding="{Binding Model}" Width="200"/>
+                                <DataGridTextColumn Header="Manufacturer" Binding="{Binding Manufacturer}" Width="120"/>
+                                <DataGridTextColumn Header="Size" Binding="{Binding SizeInches}" Width="60"/>
+                                <DataGridTextColumn Header="Resolution" Binding="{Binding NativeResolution}" Width="110"/>
+                                <DataGridTextColumn Header="Refresh (Hz)" Binding="{Binding RefreshRate}" Width="90"/>
+                                <DataGridTextColumn Header="Connection" Binding="{Binding Connection}" Width="90"/>
+                                <DataGridCheckBoxColumn Header="HDR" Binding="{Binding Hdr}" Width="50"/>
+                                <DataGridCheckBoxColumn Header="VRR" Binding="{Binding Vrr}" Width="50"/>
+                                <DataGridTextColumn Header="Year" Binding="{Binding YearOfManufacture}" Width="120"/>
+                                <DataGridTextColumn Header="Serial" Binding="{Binding EdidSerial}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                            <Button Content="Copy Section" Click="CopyMonitorsSection_Click" Padding="12,6"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
             <!-- Storage Tab -->
             <TabItem Header="Storage" Style="{StaticResource TabItemStyle}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -314,6 +342,33 @@
 
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
                             <Button Content="Copy Section" Click="CopyStorageSection_Click" Padding="12,6"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Network Tab -->
+            <TabItem Header="Network" Style="{StaticResource TabItemStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="20">
+                        <TextBlock Text="Network Adapters:" FontWeight="Bold" Margin="0,0,0,10"/>
+                        <DataGrid x:Name="NetworkGrid" AutoGenerateColumns="False"
+                                  IsReadOnly="True" GridLinesVisibility="Horizontal">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="220"/>
+                                <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="80"/>
+                                <DataGridTextColumn Header="MAC" Binding="{Binding Mac}" Width="130"/>
+                                <DataGridTextColumn Header="Speed (Mbps)" Binding="{Binding LinkSpeedMbps}" Width="100"/>
+                                <DataGridTextColumn Header="Driver" Binding="{Binding Driver}" Width="150"/>
+                                <DataGridTextColumn Header="Wi-Fi Standard" Binding="{Binding WiFi.Standard}" Width="110"/>
+                                <DataGridTextColumn Header="Band" Binding="{Binding WiFi.Band}" Width="80"/>
+                                <DataGridTextColumn Header="MIMO" Binding="{Binding WiFi.Mimo}" Width="80"/>
+                                <DataGridTextColumn Header="BT Version" Binding="{Binding Bluetooth.Version}" Width="80"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                            <Button Content="Copy Section" Click="CopyNetworkSection_Click" Padding="12,6"/>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
