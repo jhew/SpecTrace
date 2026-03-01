@@ -62,7 +62,7 @@ Since SpecTrace is portable:
 By default, exports are saved to your Documents folder, but you can choose any location during the export process.
 
 ### Can I automate SpecTrace exports?
-SpecTrace is a GUI application. Automated or unattended export is not currently supported.
+Currently, SpecTrace is designed as an interactive application. Command-line automation features may be added in future versions.
 
 ### How large are the exported files?
 Typical file sizes:

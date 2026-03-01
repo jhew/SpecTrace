@@ -78,9 +78,11 @@ jobs:
         shell: pwsh
         working-directory: installer
         run: |
-          $iscc = Get-Command "iscc.exe" -ErrorAction SilentlyContinue
-          if (-not $iscc) { throw "iscc.exe not found on PATH. Ensure Inno Setup installed correctly." }
-          & $iscc.Source SpecTrace.iss `
+          $isccCmd = Get-Command "iscc.exe" -ErrorAction SilentlyContinue
+          if (-not $isccCmd) {
+            throw "iscc.exe not found on PATH. Ensure Inno Setup installed correctly."
+          }
+          & $isccCmd.Source SpecTrace.iss `
             /DMyAppVersion=${{ steps.version.outputs.ver }} `
             /DSourceDir=..\publish
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
@@ -138,7 +140,7 @@ jobs:
 
             | File | Description |
             |------|-------------|
-            | `SpecTrace-${{ steps.version.outputs.ver }}-Setup.exe` | Installer — installs per-user by default; elevates to `%ProgramFiles%\SpecTrace` when run as administrator. Adds Start Menu entry. |
+            | `SpecTrace-${{ steps.version.outputs.ver }}-Setup.exe` | Installer — adds Start Menu entry; installs to `%ProgramFiles%\SpecTrace` (admin) or `%LocalAppData%\Programs\SpecTrace` (standard user) |
             | `SpecTrace-${{ steps.version.outputs.ver }}-Portable.zip` | Portable — extract and run, leaves nothing behind |
             | `SpecTrace-${{ steps.version.outputs.ver }}-SHA256SUMS.txt` | SHA-256 checksums for both files |
 

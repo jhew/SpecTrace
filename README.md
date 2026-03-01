@@ -60,7 +60,7 @@ SpecTrace is a portable, single-executable tool that collects detailed hardware 
 SpecTrace is designed to fit into existing support and audit workflows:
 
 - Single portable EXE suitable for USB kits and remote sessions
-- Export to JSON, HTML, Markdown, or plain text for documentation and ticketing
+- GUI export to JSON, HTML, and Markdown for documentation and ticketing
 - PII redaction for safe log sharing and ticketing
 - No telemetry, no installer, no registry changes
 - Runs on aging hardware with minimal resource overhead
@@ -69,7 +69,7 @@ SpecTrace is designed to fit into existing support and audit workflows:
 | --- | --- | --- | --- |
 | Portable, no install | Yes | Partial | Partial |
 | No telemetry | Yes | Varies | Varies |
-| Export (JSON / MD / HTML) | Yes | No | No |
+| Export (JSON / HTML / MD) | Yes | No | No |
 | PII redaction | Yes | No | No |
 
 ## Privacy
