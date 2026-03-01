@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Linq;
 using SpecTrace.Models;
 using SpecTrace.Detectors;
 
@@ -24,7 +23,7 @@ namespace SpecTrace.Core
             };
         }
 
-        public async Task<SystemInfo> ScanAsync(bool deepScan = false, bool redact = false, List<string>? sections = null)
+        public async Task<SystemInfo> ScanAsync(bool deepScan = false, bool redact = false)
         {
             var systemInfo = new SystemInfo
             {
@@ -34,16 +33,8 @@ namespace SpecTrace.Core
 
             var tasks = new List<Task>();
 
-            // Filter detectors based on requested sections
-            var activeDetectors = _detectors;
-            if (sections != null && sections.Any())
-            {
-                activeDetectors = _detectors.Where(d => 
-                    sections.Any(s => d.GetType().Name.ToLower().Contains(s.ToLower()))).ToList();
-            }
-
             // Run all detectors in parallel with timeout
-            foreach (var detector in activeDetectors)
+            foreach (var detector in _detectors)
             {
                 tasks.Add(Task.Run(async () =>
                 {

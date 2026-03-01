@@ -1,170 +1,123 @@
 # SpecTrace Deployment Guide
 
-This guide covers silent usage, packaging options, and deployment examples for enterprise tooling.
+This guide covers installation options and deployment approaches for distributing SpecTrace on individual machines or across an organisation.
 
-## Silent install/run
+## Distribution formats
 
-SpecTrace is a portable, single EXE. There is no installer required, so “silent install” typically means:
+Each GitHub Release includes two options:
 
-1. Copy `SpecTrace.exe` to a target folder.
-2. Run it with CLI flags to export reports.
-3. Collect the exported file(s) with your deployment tool.
+| File | Best for |
+|------|----------|
+| `SpecTrace-x.y.z-Setup.exe` | Managed machines, shared workstations, Start Menu integration |
+| `SpecTrace-x.y.z-Portable.zip` | USB kits, temporary use, environments that forbid installers |
+| `SpecTrace-x.y.z-SHA256SUMS.txt` | Integrity verification, winget manifest authoring |
 
-### Example: run silently and export JSON
+Both require the [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0/runtime?runtime=desktop&os=windows&arch=x64). The installer detects and links to it automatically if absent.
+
+---
+
+## Installer (`-Setup.exe`)
+
+The installer is built with Inno Setup and supports both elevated and standard-user installs:
+
+| Run as | Install location |
+|--------|-----------------|
+| Administrator | `%ProgramFiles%\SpecTrace` |
+| Standard user | `%LocalAppData%\Programs\SpecTrace` |
+
+**Silent install (admin):**
 
 ```powershell
-# Create an output folder
-New-Item -ItemType Directory -Path "C:\ProgramData\SpecTrace" -Force | Out-Null
-
-# Run SpecTrace with redaction and a limited section set
-Start-Process -FilePath "C:\ProgramData\SpecTrace\SpecTrace.exe" \
-  -ArgumentList "--quick --redact --select cpu,memory,storage --json C:\ProgramData\SpecTrace\specs.json" \
-  -Wait -NoNewWindow
+Start-Process -FilePath ".\SpecTrace-1.0.0-Setup.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" -Wait
 ```
 
-### Example: full export in unattended mode
+**Silent install (standard user, no UAC prompt):**
 
 ```powershell
-Start-Process -FilePath "C:\ProgramData\SpecTrace\SpecTrace.exe" \
-  -ArgumentList "--deep --redact --json C:\ProgramData\SpecTrace\specs.json" \
-  -Wait -NoNewWindow
+Start-Process -FilePath ".\SpecTrace-1.0.0-Setup.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /CURRENTUSER" -Wait
 ```
 
-> Tip: If you omit output flags, SpecTrace prints a summary to stdout. For automation, prefer `--json` (or another export flag) to generate files.
+**Silent uninstall:**
 
-## Packaging options
+```powershell
+# Admin install
+Start-Process -FilePath "${env:ProgramFiles}\SpecTrace\unins000.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES" -Wait
 
-### Portable deployment (recommended)
+# Standard-user install
+Start-Process -FilePath "${env:LOCALAPPDATA}\Programs\SpecTrace\unins000.exe" -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES" -Wait
+```
 
-- **Pros**: No installer, minimal footprint, easy rollback.
-- **Flow**:
-  1. Ship `SpecTrace.exe` to a known folder (e.g., `C:\ProgramData\SpecTrace`).
-  2. Run it with CLI flags.
-  3. Collect output files.
-  4. Remove the EXE if you want a clean exit.
+---
 
-### MSIX packaging
+## Portable (`-Portable.zip`)
 
-If your environment standardizes on MSIX, you can wrap the EXE:
+Extract the ZIP to any folder and run `SpecTrace.exe` directly. No registry changes, no installation artefacts.
 
-1. Use the MSIX Packaging Tool to capture a clean install.
-2. Add a **desktop shortcut** or **start menu entry** for `SpecTrace.exe`.
-3. Configure **App Installer** or Intune to deploy the MSIX package.
-4. Use a **run script** or **scheduled task** for automated collection.
+```powershell
+$target = "C:\Tools\SpecTrace"
+New-Item -ItemType Directory -Path $target -Force | Out-Null
+Expand-Archive -Path ".\SpecTrace-1.0.0-Portable.zip" -DestinationPath $target -Force
+```
 
-> Because SpecTrace is portable, MSIX is mainly for centralized distribution/updates rather than installation requirements.
+---
 
-### MSI packaging
+## Enterprise deployment
 
-For MSI-based environments, you can wrap `SpecTrace.exe` with a simple MSI:
+### winget
 
-1. Use a packaging tool (e.g., WiX Toolset) to place `SpecTrace.exe` into `C:\ProgramData\SpecTrace`.
-2. Add uninstall metadata and optional shortcuts.
-3. Use your software distribution platform to deploy the MSI.
+```powershell
+winget install SpecTrace.SpecTrace
+```
 
-> The MSI’s primary role is distribution and inventory tracking. SpecTrace itself still runs as a portable EXE.
-
-## Deployment examples
+Available once the winget-pkgs manifest is published for the relevant version.
 
 ### Microsoft Intune (Win32 app)
 
-**Install command** (copy EXE):
+Wrap `SpecTrace-x.y.z-Setup.exe` as a Win32 app:
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\Install-SpecTrace.ps1
-```
-
-**Sample `Install-SpecTrace.ps1`:**
-
-```powershell
-$target = "C:\ProgramData\SpecTrace"
-New-Item -ItemType Directory -Path $target -Force | Out-Null
-Copy-Item -Path ".\SpecTrace.exe" -Destination "$target\SpecTrace.exe" -Force
-```
-
-**Detection rule idea:**
-
-- File exists: `C:\ProgramData\SpecTrace\SpecTrace.exe`
-
-**Run script for collection:**
-
-```powershell
-Start-Process -FilePath "C:\ProgramData\SpecTrace\SpecTrace.exe" \
-  -ArgumentList "--quick --redact --select cpu,graphics,storage --json C:\ProgramData\SpecTrace\specs.json" \
-  -Wait -NoNewWindow
-```
+- **Install command:** `SpecTrace-1.0.0-Setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART`
+- **Uninstall command:** `"%ProgramFiles%\SpecTrace\unins000.exe" /VERYSILENT /SUPPRESSMSGBOXES`
+- **Detection rule:** File exists — `%ProgramFiles%\SpecTrace\SpecTrace.exe`
+- **Return codes:** `0` = success, `3010` = reboot required (unlikely but map it as success/soft reboot)
 
 ### Microsoft SCCM / MECM
 
-**Application install program:**
+Create a standard Application with:
+
+- **Install program:** `SpecTrace-1.0.0-Setup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART`
+- **Uninstall program:** `"%ProgramFiles%\SpecTrace\unins000.exe" /VERYSILENT /SUPPRESSMSGBOXES`
+- **Detection method:** File — `%ProgramFiles%\SpecTrace\SpecTrace.exe`, exists
+
+### RMM tools (NinjaOne, Datto, ConnectWise, etc.)
+
+Deploy via a PowerShell script component:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File Install-SpecTrace.ps1
+# Download and run the installer silently
+$release  = "1.0.0"
+$url      = "https://github.com/jhew/SpecTrace/releases/download/v$release/SpecTrace-$release-Setup.exe"
+$installer = "$env:TEMP\SpecTrace-Setup.exe"
+
+Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
+Start-Process -FilePath $installer -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART" -Wait
+Remove-Item $installer -Force
 ```
 
-**Run command as a program or scheduled task:**
+---
 
-```powershell
-"C:\ProgramData\SpecTrace\SpecTrace.exe" --quick --redact --select cpu,network,storage --json "C:\ProgramData\SpecTrace\specs.json"
-```
+## Exporting system information
 
-**Collect output** using SCCM hardware inventory, a file collection task, or a custom script that uploads `specs.json`.
+SpecTrace is a GUI application — users run it, view their hardware summary, and export via the **Export...** button in the toolbar. Supported formats: **JSON, HTML, Markdown, plain text**.
 
-### Popular RMM tools
+For automated or unattended hardware collection in enterprise pipelines, evaluate tools with a dedicated CLI (e.g., `winmgmt` queries, PowerShell `Get-WmiObject`, or SCCM hardware inventory) rather than SpecTrace.
 
-#### NinjaOne
-
-- **Script**: PowerShell
-- **Run as**: System
-
-```powershell
-$target = "C:\ProgramData\SpecTrace"
-New-Item -ItemType Directory -Path $target -Force | Out-Null
-Copy-Item -Path "$PSScriptRoot\SpecTrace.exe" -Destination "$target\SpecTrace.exe" -Force
-Start-Process -FilePath "$target\SpecTrace.exe" \
-  -ArgumentList "--quick --redact --select cpu,memory,storage --json $target\specs.json" \
-  -Wait -NoNewWindow
-```
-
-#### Datto RMM
-
-- **Component**: PowerShell
-- **Run as**: System
-
-```powershell
-$target = "C:\ProgramData\SpecTrace"
-New-Item -ItemType Directory -Path $target -Force | Out-Null
-Copy-Item -Path "$PSScriptRoot\SpecTrace.exe" -Destination "$target\SpecTrace.exe" -Force
-Start-Process -FilePath "$target\SpecTrace.exe" \
-  -ArgumentList "--quick --redact --select cpu,graphics,storage --json $target\specs.json" \
-  -Wait -NoNewWindow
-```
-
-#### ConnectWise Automate
-
-- **Script**: PowerShell or Batch
-- **Run as**: System
-
-```powershell
-$target = "C:\ProgramData\SpecTrace"
-New-Item -ItemType Directory -Path $target -Force | Out-Null
-Copy-Item -Path "$PSScriptRoot\SpecTrace.exe" -Destination "$target\SpecTrace.exe" -Force
-Start-Process -FilePath "$target\SpecTrace.exe" \
-  -ArgumentList "--quick --redact --select cpu,network,storage --json $target\specs.json" \
-  -Wait -NoNewWindow
-```
-
-> Adjust `--select` based on the sections you need: `cpu,memory,graphics,storage,network,usb,audio,sensors,security,processes`.
-
-## Automation tips
-
-- **Redaction**: Use `--redact` for safe sharing.
-- **Targeted exports**: Use `--select` for smaller, faster collections.
-- **Centralized collection**: Place output in a predictable path like `C:\ProgramData\SpecTrace`.
-- **Scheduling**: Use Task Scheduler or your RMM to run nightly/weekly exports.
+---
 
 ## Troubleshooting
 
-- **Empty output**: Ensure `SpecTrace.exe` is reachable and write permissions exist for the output folder.
-- **Deep scan**: `--deep` requires administrative privileges.
-- **Exit codes**: A non-zero exit code can indicate partial detection (e.g., CPU not detected).
+| Symptom | Likely cause |
+|---------|-------------|
+| App does not start | .NET 8 Desktop Runtime missing — download from the link above |
+| Blank WMI fields | WMI service not running; run `winmgmt /resetrepository` as admin |
+| SmartScreen warning | Binary not yet code-signed; click *More info → Run anyway*, or check the SHA-256 in `SHA256SUMS.txt` |
+| Deep Scan shows less data | Deep Scan needs admin rights; re-run as administrator for full SMART/power data |

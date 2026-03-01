@@ -8,7 +8,7 @@
 [![Windows](https://img.shields.io/badge/Windows-11-blue?style=for-the-badge&logo=windows)](https://github.com/jhew/SpecTrace/releases/latest)
 [![.NET](https://img.shields.io/badge/.NET-8.0-purple?style=for-the-badge&logo=dotnet)](https://dotnet.microsoft.com/download/dotnet/8.0)
 
-[Download](https://github.com/jhew/SpecTrace/releases/latest)  [Screenshots](#screenshots)  [CLI Reference](#cli-reference)  [Support](#support)
+[Download](https://github.com/jhew/SpecTrace/releases/latest)  [Screenshots](#screenshots)  [Support](#support)
 
 </div>
 
@@ -51,22 +51,6 @@ SpecTrace is a portable, single-executable tool that collects detailed hardware 
 3. A quick scan runs automatically on launch.
 4. Use **Deep Scan** for additional data such as SMART attributes and power metrics.
 
-## CLI Reference
-
-```
-SpecTrace.exe [options]
-```
-
-| Option | Description |
-| --- | --- |
-| `--quick` | Quick scan (default) |
-| `--deep` | Deep scan  includes SMART, power metrics |
-| `--redact` | Redact personally identifiable information |
-| `--json <file>` | Export to JSON |
-| `--html <file>` | Export to HTML |
-| `--markdown <file>` | Export to Markdown |
-| `--text <file>` | Export to plain text |
-
 ## Screenshots
 
 ![SpecTrace Main Interface](assets/screenshots/Screenshot20260228.png)
@@ -76,7 +60,7 @@ SpecTrace.exe [options]
 SpecTrace is designed to fit into existing support and audit workflows:
 
 - Single portable EXE suitable for USB kits and remote sessions
-- CLI export to JSON or Markdown for scripted asset collection
+- GUI export to JSON, HTML, and Markdown for documentation and ticketing
 - PII redaction for safe log sharing and ticketing
 - No telemetry, no installer, no registry changes
 - Runs on aging hardware with minimal resource overhead
@@ -85,7 +69,7 @@ SpecTrace is designed to fit into existing support and audit workflows:
 | --- | --- | --- | --- |
 | Portable, no install | Yes | Partial | Partial |
 | No telemetry | Yes | Varies | Varies |
-| CLI export (JSON / MD / HTML) | Yes | No | No |
+| Export (JSON / HTML / MD) | Yes | No | No |
 | PII redaction | Yes | No | No |
 
 ## Privacy
