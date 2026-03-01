@@ -1,220 +1,153 @@
-name: Release Build
+name: Release
 
 on:
-  release:
-    types: [created]
+  push:
+    tags: ["v*.*.*"]
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version number (e.g., v1.0.0)'
+        description: "Version number without v prefix (e.g. 1.2.3)"
         required: true
-        default: 'v1.0.0'
+        default: "1.0.0"
 
 jobs:
   build:
     runs-on: windows-latest
     permissions:
       contents: write
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '8.0.x'
-        
-    - name: Restore dependencies
-      run: dotnet restore src/SpecTrace/SpecTrace.csproj
-      
-    - name: Extract Version from Tag
-      id: get_version
-      run: |
-        $version = "${{ github.ref_name }}" -replace '^v', ''
-        if ("${{ github.event.inputs.version }}" -ne "") {
-          $version = "${{ github.event.inputs.version }}" -replace '^v', ''
-        }
-        Write-Output "Building version: $version"
-        echo "version=$version" >> $env:GITHUB_OUTPUT
-      
-    - name: Build Release
-      run: |
-        dotnet build src/SpecTrace/SpecTrace.csproj `
-          --configuration Release `
-          --no-restore `
-          -p:Version=${{ steps.get_version.outputs.version }} `
-          -p:AssemblyVersion=${{ steps.get_version.outputs.version }}.0 `
-          -p:FileVersion=${{ steps.get_version.outputs.version }}.0
-      
 
-    - name: Build and Publish Executables
-      run: |
-        # Build framework-dependent executable (smaller, requires .NET)
-        dotnet publish src/SpecTrace/SpecTrace.csproj `
-          --configuration Release `
-          --runtime win-x64 `
-          --self-contained false `
-          --output publish-framework `
-          -p:PublishSingleFile=true `
-          -p:Version=${{ steps.get_version.outputs.version }} `
-          -p:AssemblyVersion=${{ steps.get_version.outputs.version }}.0 `
-          -p:FileVersion=${{ steps.get_version.outputs.version }}.0 `
-          -p:DebugType=None `
-          -p:DebugSymbols=false
-          
-        # Build self-contained executable (larger, no dependencies)
-        dotnet publish src/SpecTrace/SpecTrace.csproj `
-          --configuration Release `
-          --runtime win-x64 `
-          --self-contained true `
-          --output publish-standalone `
-          -p:PublishSingleFile=true `
-          -p:Version=${{ steps.get_version.outputs.version }} `
-          -p:AssemblyVersion=${{ steps.get_version.outputs.version }}.0 `
-          -p:FileVersion=${{ steps.get_version.outputs.version }}.0 `
-          -p:DebugType=None `
-          -p:DebugSymbols=false
-          
-    - name: Verify Build Outputs
-      run: |
-        Write-Output "=== Framework-Dependent Build ==="
-        Get-ChildItem -Path "publish-framework" -Recurse
-        $frameworkExe = Get-Item "publish-framework/SpecTrace.exe"
-        Write-Output "Framework executable size: $([math]::Round($frameworkExe.Length/1KB,2)) KB"
-        
-        Write-Output "`n=== Self-Contained Build ==="
-        Get-ChildItem -Path "publish-standalone" -Recurse  
-        $standaloneExe = Get-Item "publish-standalone/SpecTrace.exe"
-        Write-Output "Standalone executable size: $([math]::Round($standaloneExe.Length/1MB,2)) MB"
-        
-    - name: Create Release Packages
-      run: |
-        # Create release package directories
-        New-Item -ItemType Directory -Path "release-lightweight" -Force
-        New-Item -ItemType Directory -Path "release-standalone" -Force
-        
-        $version = "${{ github.ref_name }}"
-        if ("${{ github.event.inputs.version }}" -ne "") {
-          $version = "${{ github.event.inputs.version }}"
-        }
-        
-        # Lightweight package (framework-dependent)
-        Copy-Item "publish-framework/SpecTrace.exe" "release-lightweight/"
-        Copy-Item "README.md" "release-lightweight/" -ErrorAction SilentlyContinue
-        Copy-Item "LICENSE" "release-lightweight/" -ErrorAction SilentlyContinue
-        
-        @"
-        SpecTrace $version - Lightweight Windows Release
-        
-        What's included:
-        - SpecTrace.exe (Framework-dependent - requires .NET 8.0 Runtime)
-        - README.md and LICENSE
-        
-        IMPORTANT: Requires .NET 8.0 Runtime
-        Download from: https://dotnet.microsoft.com/download/dotnet/8.0
-        
-        Advantages:
-        - Very small download (~500 KB)
-        - Fast startup and better performance
-        - Most Windows systems already have .NET 8.0
-        
-        Quick Start:
-        1. Ensure .NET 8.0 Runtime is installed
-        2. Extract this ZIP and run SpecTrace.exe
-        
-        Built: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
-        Commit: ${{ github.sha }}
-        "@ | Out-File -FilePath "release-lightweight/README-FIRST.txt" -Encoding UTF8
-        
-        # Standalone package (self-contained) 
-        Copy-Item "publish-standalone/SpecTrace.exe" "release-standalone/"
-        Copy-Item "README.md" "release-standalone/" -ErrorAction SilentlyContinue
-        Copy-Item "LICENSE" "release-standalone/" -ErrorAction SilentlyContinue
-        
-        @"
-        SpecTrace $version - Standalone Windows Release
-        
-        What's included:
-        - SpecTrace.exe (Self-contained - no dependencies required)
-        - README.md and LICENSE
-        
-        Advantages:
-        - No dependencies required
-        - Works on Windows 11
-        - Single file download and run
-        
-        Note: Larger download (~70 MB) due to included .NET runtime
-        
-        Quick Start:
-        1. Extract this ZIP and run SpecTrace.exe
-        2. No installation required!
-        
-        Built: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss UTC')
-        Commit: ${{ github.sha }}
-        "@ | Out-File -FilePath "release-standalone/README-FIRST.txt" -Encoding UTF8
-        
-        # Create ZIP files - only lightweight for GitHub (size limit)
-        Compress-Archive -Path "publish-framework/SpecTrace.exe" -DestinationPath "SpecTrace-$version-Lightweight.zip" -Force
-        Compress-Archive -Path "release-lightweight/*" -DestinationPath "SpecTrace-$version-Lightweight-Complete.zip" -Force
-        
-        # Note: Standalone version too large for GitHub (25MB limit)
-        # Users can build locally or use alternative distribution method
-        
-    - name: Upload Release Assets
-      if: github.event_name == 'release'
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          SpecTrace-*.zip
-        body: |
-          ## 🚀 SpecTrace Release
-          
-          Professional Windows system information tool for comprehensive hardware analysis and diagnostics.
-          
-          ### 📥 Download
-          
-          **SpecTrace.exe** - Self-contained executable (~70MB)
-          - ✅ No dependencies required - works on Windows 11
-          - ✅ Single file download and run
-          - ✅ Includes all .NET runtime components
-          
-          ### ✨ Key Features
-          - **Comprehensive Hardware Detection** - CPU, Memory, Graphics, Storage, Security, Network
-          - **Modern Interface** - Clean UI with light/dark themes and intuitive navigation
-          - **Multiple Export Formats** - JSON, XML, and text formats for different use cases
-          - **Privacy Protection** - Built-in PII redaction keeps your data safe
-          - **Portable Application** - No installation required, runs from anywhere
-          - **Professional Ready** - Perfect for IT support, documentation, and diagnostics
-          
-          ### 🔧 System Requirements
-          - Windows 11
-          - 4 GB RAM minimum (8 GB recommended)
-          - 10 MB free disk space
-          - Standard user permissions (Administrator not required for basic scanning)
-          
-          ### 🚀 Quick Start
-          1. Download `SpecTrace.exe`
-          2. Run the executable (no installation needed)
-          3. View comprehensive system information instantly
-          4. Export data in your preferred format
-          
-          ### 📚 Documentation
-          - **[📖 User Guide](https://github.com/${{ github.repository }}/blob/main/docs/USER_GUIDE.md)** - Complete usage instructions
-          - **[❓ FAQ](https://github.com/${{ github.repository }}/blob/main/docs/FAQ.md)** - Common questions answered  
-          - **[🛠️ Troubleshooting](https://github.com/${{ github.repository }}/blob/main/docs/TROUBLESHOOTING.md)** - Solve common issues
-          
-          ### 🔐 Security & Privacy
-          - No data sent to external servers
-          - All processing happens locally on your computer
-          - Built-in privacy protection with PII redaction
-          - Read-only operations - never modifies your system
-          - Portable - leaves no traces when closed
-          
-          ---
-          
-          **Need help?** Check our [documentation](https://github.com/${{ github.repository }}/tree/main/docs) or [report an issue](https://github.com/${{ github.repository }}/issues).
-        draft: false
-        prerelease: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      # ------------------------------------------------------------------ #
+      # 1. Source
+      # ------------------------------------------------------------------ #
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------------------ #
+      # 2. Toolchain
+      # ------------------------------------------------------------------ #
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      # ------------------------------------------------------------------ #
+      # 3. Resolve version
+      # ------------------------------------------------------------------ #
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $ver = "${{ github.event.inputs.version }}"
+          } else {
+            $ver = "${{ github.ref_name }}" -replace '^v', ''
+          }
+          Write-Host "Version: $ver"
+          "ver=$ver" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      # ------------------------------------------------------------------ #
+      # 4. Publish portable exe (framework-dependent, single-file)
+      # ------------------------------------------------------------------ #
+      - name: Publish portable exe
+        shell: pwsh
+        run: |
+          dotnet publish src/SpecTrace/SpecTrace.csproj `
+            --configuration Release `
+            --runtime win-x64 `
+            --self-contained false `
+            --output publish `
+            -p:PublishSingleFile=true `
+            -p:DebugType=None `
+            -p:DebugSymbols=false `
+            -p:Version=${{ steps.version.outputs.ver }} `
+            -p:AssemblyVersion=${{ steps.version.outputs.ver }}.0 `
+            -p:FileVersion=${{ steps.version.outputs.ver }}.0
+
+      # ------------------------------------------------------------------ #
+      # 5. Build Inno Setup installer
+      # ------------------------------------------------------------------ #
+      - name: Build installer (Inno Setup)
+        shell: pwsh
+        working-directory: installer
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          & $iscc SpecTrace.iss `
+            /DMyAppVersion=${{ steps.version.outputs.ver }} `
+            /DSourceDir=..\publish
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
+
+      # ------------------------------------------------------------------ #
+      # 6. Create portable ZIP
+      # ------------------------------------------------------------------ #
+      - name: Create portable ZIP
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.version.outputs.ver }}"
+          Compress-Archive `
+            -Path publish\SpecTrace.exe, README.md, LICENSE `
+            -DestinationPath "SpecTrace-$ver-Portable.zip" `
+            -Force
+
+      # ------------------------------------------------------------------ #
+      # 7. SHA-256 checksums (needed for winget manifests)
+      # ------------------------------------------------------------------ #
+      - name: Generate checksums
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.version.outputs.ver }}"
+          $files = @(
+            "SpecTrace-$ver-Portable.zip",
+            "installer-output\SpecTrace-$ver-Setup.exe"
+          )
+          $lines = $files | ForEach-Object {
+            $hash = (Get-FileHash $_ -Algorithm SHA256).Hash.ToLower()
+            "$hash  $_"
+          }
+          $lines | Out-File -FilePath "SpecTrace-$ver-SHA256SUMS.txt" -Encoding UTF8
+          Write-Host ($lines -join "`n")
+
+      # ------------------------------------------------------------------ #
+      # 8. Upload to GitHub Release
+      # ------------------------------------------------------------------ #
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ steps.version.outputs.ver }}"
+          name: "SpecTrace v${{ steps.version.outputs.ver }}"
+          draft: false
+          prerelease: false
+          files: |
+            SpecTrace-${{ steps.version.outputs.ver }}-Portable.zip
+            installer-output/SpecTrace-${{ steps.version.outputs.ver }}-Setup.exe
+            SpecTrace-${{ steps.version.outputs.ver }}-SHA256SUMS.txt
+          body: |
+            ## SpecTrace v${{ steps.version.outputs.ver }}
+
+            Windows system information tool — CPU, memory, GPU, storage, security and more in one view.
+
+            ### Downloads
+
+            | File | Description |
+            |------|-------------|
+            | `SpecTrace-${{ steps.version.outputs.ver }}-Setup.exe` | Installer — installs to `%ProgramFiles%\SpecTrace`, adds Start Menu entry |
+            | `SpecTrace-${{ steps.version.outputs.ver }}-Portable.zip` | Portable — extract and run, leaves nothing behind |
+            | `SpecTrace-${{ steps.version.outputs.ver }}-SHA256SUMS.txt` | SHA-256 checksums for both files |
+
+            **Both builds require the [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0/runtime).** The installer will prompt and open the download page if it is not detected.
+
+            ### System requirements
+            - Windows 10 21H1 (build 19041) or later — Windows 11 recommended
+            - x64 processor
+            - .NET 8 Desktop Runtime
+
+            ### winget
+            ```
+            winget install SpecTrace.SpecTrace
+            ```
+            *(available after the winget-pkgs manifest is merged for this version)*
+
+            ---
+            **[User Guide](https://github.com/${{ github.repository }}/blob/main/docs/USER_GUIDE.md)** · **[FAQ](https://github.com/${{ github.repository }}/blob/main/docs/FAQ.md)** · **[Report an issue](https://github.com/${{ github.repository }}/issues)**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
