@@ -65,30 +65,29 @@ jobs:
             -p:FileVersion=${{ steps.version.outputs.ver }}.0
 
       # ------------------------------------------------------------------ #
-      # 5. Install Inno Setup
-      # ------------------------------------------------------------------ #
-      - name: Install Inno Setup
-        shell: pwsh
-        run: choco install innosetup --yes --no-progress
-
-      # ------------------------------------------------------------------ #
-      # 6. Build Inno Setup installer
+      # 5. Build Inno Setup installer
+      # Inno Setup 6 is pre-installed on windows-latest but not in PATH.
+      # Use the known installation path; fall back to PATH if present.
       # ------------------------------------------------------------------ #
       - name: Build installer (Inno Setup)
         shell: pwsh
         working-directory: installer
         run: |
-          $isccCmd = Get-Command "iscc.exe" -ErrorAction SilentlyContinue
-          if (-not $isccCmd) {
-            throw "iscc.exe not found on PATH. Ensure Inno Setup installed correctly."
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            # Fallback: Chocolatey shim (e.g. if choco-installed instead)
+            $iscc = (Get-Command "iscc.exe" -ErrorAction SilentlyContinue)?.Source
           }
-          & $isccCmd.Source SpecTrace.iss `
+          if (-not $iscc -or -not (Test-Path $iscc)) {
+            throw "ISCC.exe not found. Expected at 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'."
+          }
+          & $iscc SpecTrace.iss `
             /DMyAppVersion=${{ steps.version.outputs.ver }} `
             /DSourceDir=..\publish
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
 
       # ------------------------------------------------------------------ #
-      # 7. Create portable ZIP
+      # 6. Create portable ZIP
       # ------------------------------------------------------------------ #
       - name: Create portable ZIP
         shell: pwsh
@@ -100,7 +99,7 @@ jobs:
             -Force
 
       # ------------------------------------------------------------------ #
-      # 8. SHA-256 checksums (needed for winget manifests)
+      # 7. SHA-256 checksums (needed for winget manifests)
       # ------------------------------------------------------------------ #
       - name: Generate checksums
         shell: pwsh
@@ -118,7 +117,7 @@ jobs:
           Write-Host ($lines -join "`n")
 
       # ------------------------------------------------------------------ #
-      # 9. Upload to GitHub Release
+      # 8. Upload to GitHub Release
       # ------------------------------------------------------------------ #
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
