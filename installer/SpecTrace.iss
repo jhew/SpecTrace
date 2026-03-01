@@ -16,7 +16,7 @@
 #define MyDotNetVersion "8.0"
 
 [Setup]
-AppId={{A7C3E2F1-8B4D-4E9A-B6C2-D1F5E8A3C7B0}
+AppId={{A7C3E2F1-8B4D-4E9A-B6C2-D1F5E8A3C7B0}}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
@@ -38,7 +38,7 @@ PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-MinVersion=10.0.19041
+MinVersion=10.0.22000
 UninstallDisplayIcon={app}\{#MyAppExeName}
 UninstallDisplayName={#MyAppName}
 VersionInfoVersion={#MyAppVersion}
@@ -54,7 +54,9 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "{#SourceDir}\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+; Install all publish output so framework-dependent single-file apps can locate
+; companion files (.runtimeconfig.json, .deps.json) if present.
+Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{group}\{#MyAppName}";       DestFilename: "{app}\{#MyAppExeName}"
@@ -108,7 +110,7 @@ begin
     if MsgResult = IDOK then
     begin
       ShellExec('open',
-        'https://dotnet.microsoft.com/download/dotnet/8.0/runtime?utm_source=spectrace-installer',
+        'https://dotnet.microsoft.com/download/dotnet/8.0/runtime?utm_source=spectrace-installer&runtime=desktop&os=windows&arch=x64',
         '', '', SW_SHOWNORMAL, ewNoWait, MsgResult);
       Result := False;
     end;

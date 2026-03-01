@@ -65,32 +65,40 @@ jobs:
             -p:FileVersion=${{ steps.version.outputs.ver }}.0
 
       # ------------------------------------------------------------------ #
-      # 5. Build Inno Setup installer
+      # 5. Install Inno Setup
+      # ------------------------------------------------------------------ #
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --yes --no-progress
+
+      # ------------------------------------------------------------------ #
+      # 6. Build Inno Setup installer
       # ------------------------------------------------------------------ #
       - name: Build installer (Inno Setup)
         shell: pwsh
         working-directory: installer
         run: |
-          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-          & $iscc SpecTrace.iss `
+          $iscc = Get-Command "iscc.exe" -ErrorAction SilentlyContinue
+          if (-not $iscc) { throw "iscc.exe not found on PATH. Ensure Inno Setup installed correctly." }
+          & $iscc.Source SpecTrace.iss `
             /DMyAppVersion=${{ steps.version.outputs.ver }} `
             /DSourceDir=..\publish
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed with exit code $LASTEXITCODE" }
 
       # ------------------------------------------------------------------ #
-      # 6. Create portable ZIP
+      # 7. Create portable ZIP
       # ------------------------------------------------------------------ #
       - name: Create portable ZIP
         shell: pwsh
         run: |
           $ver = "${{ steps.version.outputs.ver }}"
           Compress-Archive `
-            -Path publish\SpecTrace.exe, README.md, LICENSE `
+            -Path publish\*, README.md, LICENSE `
             -DestinationPath "SpecTrace-$ver-Portable.zip" `
             -Force
 
       # ------------------------------------------------------------------ #
-      # 7. SHA-256 checksums (needed for winget manifests)
+      # 8. SHA-256 checksums (needed for winget manifests)
       # ------------------------------------------------------------------ #
       - name: Generate checksums
         shell: pwsh
@@ -108,7 +116,7 @@ jobs:
           Write-Host ($lines -join "`n")
 
       # ------------------------------------------------------------------ #
-      # 8. Upload to GitHub Release
+      # 9. Upload to GitHub Release
       # ------------------------------------------------------------------ #
       - name: Upload release assets
         uses: softprops/action-gh-release@v2
@@ -130,14 +138,14 @@ jobs:
 
             | File | Description |
             |------|-------------|
-            | `SpecTrace-${{ steps.version.outputs.ver }}-Setup.exe` | Installer — installs to `%ProgramFiles%\SpecTrace`, adds Start Menu entry |
+            | `SpecTrace-${{ steps.version.outputs.ver }}-Setup.exe` | Installer — installs per-user by default; elevates to `%ProgramFiles%\SpecTrace` when run as administrator. Adds Start Menu entry. |
             | `SpecTrace-${{ steps.version.outputs.ver }}-Portable.zip` | Portable — extract and run, leaves nothing behind |
             | `SpecTrace-${{ steps.version.outputs.ver }}-SHA256SUMS.txt` | SHA-256 checksums for both files |
 
             **Both builds require the [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0/runtime).** The installer will prompt and open the download page if it is not detected.
 
             ### System requirements
-            - Windows 10 21H1 (build 19041) or later — Windows 11 recommended
+            - Windows 11 (build 22000) or later
             - x64 processor
             - .NET 8 Desktop Runtime
 
